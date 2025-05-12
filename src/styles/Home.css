@@ -1,0 +1,59 @@
+.home-container {
+    padding-bottom: 80px;
+    position: relative;
+  }
+  
+  .search-container {
+    margin-bottom: 16px;
+  }
+  
+  .search-input-wrapper {
+    position: relative;
+    width: 100%;
+  }
+  
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+  }
+  
+  .search-input {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    border-radius: 24px;
+    border: 1px solid var(--border-color);
+    font-size: 1rem;
+  }
+  
+  .patients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .loading, .no-results {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-secondary);
+  }
+  
+  .scan-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 5;
+  }
