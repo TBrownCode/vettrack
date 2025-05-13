@@ -8,9 +8,40 @@ const useCamera = () => {
   const [error, setError] = useState(null);
   const [facingMode, setFacingMode] = useState('environment'); // 'environment' for back camera, 'user' for front
 
+  // Setup polyfill for older browsers and iOS
+  useEffect(() => {
+    if (!navigator.mediaDevices) {
+      navigator.mediaDevices = {};
+    }
+
+    if (!navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia = function(constraints) {
+        const getUserMedia = 
+          navigator.webkitGetUserMedia || 
+          navigator.mozGetUserMedia ||
+          navigator.msGetUserMedia;
+        
+        if (!getUserMedia) {
+          return Promise.reject(
+            new Error('getUserMedia is not supported in this browser')
+          );
+        }
+
+        return new Promise((resolve, reject) => {
+          getUserMedia.call(navigator, constraints, resolve, reject);
+        });
+      };
+    }
+  }, []);
+
   // Start the camera
   const startCamera = async () => {
     try {
+      // Check if mediaDevices is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API not supported in your browser');
+      }
+      
       const constraints = {
         video: { facingMode }
       };
@@ -19,6 +50,11 @@ const useCamera = () => {
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play().catch(e => {
+            console.error("Error playing video:", e);
+          });
+        };
       }
       
       setStream(mediaStream);
@@ -61,18 +97,30 @@ const useCamera = () => {
     const canvas = canvasRef.current;
     
     // Set canvas dimensions to match the video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth || 320;
+    canvas.height = video.videoHeight || 240;
     
     // Draw the current video frame to the canvas
     const context = canvas.getContext('2d');
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     // Convert canvas to data URL (base64 encoded image)
-    const imageDataUrl = canvas.toDataURL('image/jpeg');
-    
-    return imageDataUrl;
+    try {
+      const imageDataUrl = canvas.toDataURL('image/jpeg');
+      return imageDataUrl;
+    } catch (err) {
+      console.error("Error converting canvas to image:", err);
+      return null;
+    }
   };
+
+  // Start camera when facingMode changes
+  useEffect(() => {
+    if (isActive) {
+      stopCamera();
+      startCamera();
+    }
+  }, [facingMode]);
 
   // Clean up by stopping the camera when component unmounts
   useEffect(() => {
@@ -80,13 +128,6 @@ const useCamera = () => {
       stopCamera();
     };
   }, []);
-
-  // Effect to restart camera when facingMode changes
-  useEffect(() => {
-    if (isActive) {
-      startCamera();
-    }
-  }, [facingMode]);
 
   return {
     videoRef,
