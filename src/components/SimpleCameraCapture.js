@@ -1,3 +1,5 @@
+// src/components/SimpleCameraCapture.js - Update with these changes
+
 import React, { useRef, useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -8,6 +10,13 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
   const fileInputRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [error, setError] = useState(null);
+  const [isIOS, setIsIOS] = useState(false);
+  
+  // Detect iOS device - but remove debug info display
+  useEffect(() => {
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    setIsIOS(iOS);
+  }, []);
   
   // Simplified camera initialization
   useEffect(() => {
@@ -15,16 +24,22 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
     
     const initCamera = async () => {
       try {
-        // Super simple constraints
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' } 
-        });
+        // Simple constraints for all devices
+        const constraints = {
+          audio: false,
+          video: { facingMode: 'environment' }
+        };
+        
+        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
         
         if (mounted) {
           setStream(mediaStream);
           
           if (videoRef.current) {
             videoRef.current.srcObject = mediaStream;
+            videoRef.current.setAttribute('playsinline', 'true');
+            videoRef.current.setAttribute('autoplay', 'true');
+            videoRef.current.setAttribute('muted', 'true');
           }
         }
       } catch (err) {
@@ -51,6 +66,7 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     
+    // Get the actual video dimensions
     canvas.width = video.videoWidth || 320;
     canvas.height = video.videoHeight || 240;
     
@@ -58,7 +74,7 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     try {
-      const imageData = canvas.toDataURL('image/jpeg');
+      const imageData = canvas.toDataURL('image/jpeg', 0.9);
       onCapture(imageData);
     } catch (err) {
       console.error('Error converting canvas to image:', err);
@@ -88,6 +104,7 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
       display: 'flex',
       flexDirection: 'column'
     }}>
+      {/* Header */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -109,6 +126,7 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
         </button>
       </div>
       
+      {/* Camera View */}
       <div style={{ flex: 1, position: 'relative' }}>
         {error ? (
           <div style={{ 
@@ -146,29 +164,39 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
             </button>
           </div>
         ) : (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'cover'
+              }}
+            />
+          </div>
         )}
+        
+        {/* Canvas for taking photos */}
         <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
       
-      <div style={{ 
-        padding: '20px', 
-        display: 'flex', 
-        justifyContent: 'center',
-        borderTop: '1px solid #333'
+      {/* Floating Capture Button - Always show this */}
+      <div style={{
+        position: 'absolute',
+        bottom: '40px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 100
       }}>
         <button 
           onClick={takePhoto}
           disabled={!!error}
           style={{
-            width: '64px',
-            height: '64px',
+            width: '70px',
+            height: '70px',
             borderRadius: '50%',
             background: !error ? '#fff' : '#555',
             color: '#000',
@@ -177,10 +205,11 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '24px',
-            cursor: !error ? 'pointer' : 'default'
+            cursor: !error ? 'pointer' : 'default',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
           }}
         >
-          <FontAwesomeIcon icon={faCamera} />
+          <FontAwesomeIcon icon={faCamera} size="lg" />
         </button>
       </div>
     </div>

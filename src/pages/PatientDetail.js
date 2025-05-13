@@ -66,16 +66,31 @@ const PatientDetail = () => {
   setShowCamera(true);
 };
 
+// In PatientDetail.js
+
 const handleCapturePhoto = async (photoData) => {
   console.log("Photo captured! Data length:", photoData?.length || 0);
+  // Add a simple validation check for the image data
+  if (!photoData || photoData.length < 1000) {
+    console.error("Invalid photo data received");
+    alert("Photo couldn't be captured. Please try again.");
+    return;
+  }
+  
   try {
+    // Show some kind of loading indicator
+    setLoading(true);
+    
     const updatedPatient = await updatePatientPhoto(id, photoData);
     console.log("Patient photo updated successfully");
+    
     setPatient(updatedPatient);
     setShowCamera(false);
   } catch (error) {
     console.error('Error updating photo:', error);
-    alert('Failed to update photo');
+    alert('Failed to update photo: ' + (error.message || 'Unknown error'));
+  } finally {
+    setLoading(false);
   }
 };
 

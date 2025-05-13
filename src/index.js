@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import './utils/mediaDevicesFix';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 

@@ -11,3 +11,17 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Add to your index.css or App.css */
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
+@media screen and (orientation: landscape) {
+  .camera-modal {
+    height: 100vh;
+    width: 100vw;
+  }
+}
