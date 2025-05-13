@@ -4,6 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus } from '../services/patientService';
 import '../styles/PatientDetail.css';
+import CameraCapture from '../components/CameraCapture';
+import { updatePatientPhoto } from '../services/patientService';
 
 const statusOptions = [
   'Admitted',
@@ -60,13 +62,19 @@ const PatientDetail = () => {
   };
 
   const handleTakePhoto = () => {
-    setShowCamera(true);
-    // In a real implementation, this would open the camera
-    setTimeout(() => {
-      alert('Camera functionality will be implemented in the next phase');
-      setShowCamera(false);
-    }, 500);
-  };
+  setShowCamera(true);
+};
+
+const handleCapturePhoto = async (photoData) => {
+  try {
+    const updatedPatient = await updatePatientPhoto(id, photoData);
+    setPatient(updatedPatient);
+    setShowCamera(false);
+  } catch (error) {
+    console.error('Error updating photo:', error);
+    alert('Failed to update photo');
+  }
+};
 
   const handleGenerateQR = () => {
     setShowQRCode(true);
@@ -170,6 +178,12 @@ const PatientDetail = () => {
           View/Print QR Code
         </button>
       </div>
+      {showCamera && (
+        <CameraCapture 
+          onCapture={handleCapturePhoto}
+          onClose={() => setShowCamera(false)}
+        />
+      )}
     </div>
   );
 };
