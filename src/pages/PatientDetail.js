@@ -6,6 +6,7 @@ import { getPatientById, updatePatientStatus } from '../services/patientService'
 import '../styles/PatientDetail.css';
 import CameraCapture from '../components/CameraCapture';
 import { updatePatientPhoto } from '../services/patientService';
+import SimpleCameraCapture from '../components/SimpleCameraCapture';
 
 const statusOptions = [
   'Admitted',
@@ -66,8 +67,10 @@ const PatientDetail = () => {
 };
 
 const handleCapturePhoto = async (photoData) => {
+  console.log("Photo captured! Data length:", photoData?.length || 0);
   try {
     const updatedPatient = await updatePatientPhoto(id, photoData);
+    console.log("Patient photo updated successfully");
     setPatient(updatedPatient);
     setShowCamera(false);
   } catch (error) {
@@ -179,9 +182,9 @@ const handleCapturePhoto = async (photoData) => {
         </button>
       </div>
       {showCamera && (
-        <CameraCapture 
-          onCapture={handleCapturePhoto}
-          onClose={() => setShowCamera(false)}
+  <SimpleCameraCapture
+    onCapture={handleCapturePhoto}
+    onClose={() => setShowCamera(false)}
         />
       )}
     </div>

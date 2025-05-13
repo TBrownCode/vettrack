@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+// src/components/CameraCapture.js
+import React, { useEffect, useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faTimes, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faTimes, faSync, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import useCamera from '../hooks/useCamera';
 import '../styles/CameraCapture.css';
 
@@ -13,76 +14,112 @@ const CameraCapture = ({ onCapture, onClose }) => {
     startCamera,
     stopCamera,
     toggleCamera,
-    takePhoto
+    takePhoto,
+    initializationStep
   } = useCamera();
   
-  const [permissionStatus, setPermissionStatus] = useState('unknown');
-
+  const [showFallback, setShowFallback] = useState(false);
+  const fileInputRef = useRef(null);
+  const [initializationTimeout, setInitializationTimeout] = useState(false);
+  
+  // Start camera and set timeout for initialization
   useEffect(() => {
-    // Check if browser supports camera
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setPermissionStatus('unsupported');
-      return;
-    }
-
-    // Start the camera when component mounts
+    console.log('CameraCapture mounted');
+    
+    // Start the camera
     const initCamera = async () => {
-      try {
-        await startCamera();
-        setPermissionStatus('granted');
-      } catch (err) {
-        console.error('Camera permission error:', err);
-        setPermissionStatus('denied');
-      }
+      await startCamera();
     };
     
     initCamera();
     
-    // Stop the camera when component unmounts
+    // Set a timeout to show fallback if camera doesn't initialize in 5 seconds
+    const timeoutId = setTimeout(() => {
+      if (!isActive) {
+        setInitializationTimeout(true);
+      }
+    }, 5000);
+    
     return () => {
+      console.log('CameraCapture unmounting');
+      clearTimeout(timeoutId);
       stopCamera();
     };
   }, [startCamera, stopCamera]);
-
-  const handleCapture = () => {
+  
+  // Show fallback after timeout or error
+  useEffect(() => {
+    if (error || initializationTimeout) {
+      setShowFallback(true);
+    }
+  }, [error, initializationTimeout]);
+  
+  // Handle file selection
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (onCapture) {
+        onCapture(event.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const handleTakePhoto = () => {
+    if (!isActive) {
+      console.log('Cannot take photo - camera not active');
+      return;
+    }
+    
     const photoData = takePhoto();
     if (photoData && onCapture) {
+      console.log('Photo captured, invoking callback');
       onCapture(photoData);
+    } else {
+      console.error('Failed to capture photo');
     }
   };
-
+  
   const renderCameraContent = () => {
-    if (error || permissionStatus === 'denied' || permissionStatus === 'unsupported') {
+    // If camera is active, show the video
+    if (isActive) {
+      return (
+        <video 
+          ref={videoRef}
+          autoPlay 
+          playsInline 
+          muted
+          className="camera-video"
+        />
+      );
+    }
+    
+    // If there's an error or initialization timeout, show error message
+    if (error || initializationTimeout) {
       return (
         <div className="camera-error">
-          <p>{error || 'Camera access denied'}</p>
-          <p>
-            Please ensure you've given permission to access the camera and 
-            are using a supported browser.
-          </p>
-          <p className="camera-help-text">
-            For iOS: Please add this app to your home screen for full camera access.<br/>
-            For Android: Make sure camera permissions are enabled for this site.
+          <FontAwesomeIcon icon={faExclamationTriangle} size="2x" className="error-icon" />
+          <p>{error || 'Camera initialization timed out'}</p>
+          <p className="step-info">Last step: {initializationStep}</p>
+          <p className="browser-info">
+            Browser: {navigator.userAgent}
           </p>
         </div>
       );
     }
     
-    if (!isActive) {
-      return <div className="camera-loading">Initializing camera...</div>;
-    }
-    
+    // Otherwise show loading message
     return (
-      <video 
-        ref={videoRef}
-        autoPlay 
-        playsInline 
-        muted
-        className="camera-video"
-      />
+      <div className="camera-loading">
+        <p>Initializing camera...</p>
+        <p className="step-info">Step: {initializationStep}</p>
+      </div>
     );
   };
-
+  
   return (
     <div className="camera-modal">
       <div className="camera-header">
@@ -94,7 +131,27 @@ const CameraCapture = ({ onCapture, onClose }) => {
       
       <div className="camera-preview">
         {renderCameraContent()}
-        {/* Hidden canvas for capturing the photo */}
+        
+        {showFallback && (
+          <div className="camera-fallback">
+            <p>Camera access failed. You can upload a photo instead:</p>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileChange}
+              className="file-input"
+            />
+            <button 
+              className="fallback-button"
+              onClick={() => fileInputRef.current.click()}
+            >
+              Select Photo
+            </button>
+          </div>
+        )}
+        
         <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
       
@@ -110,14 +167,14 @@ const CameraCapture = ({ onCapture, onClose }) => {
         
         <button 
           className="control-button capture-button" 
-          onClick={handleCapture}
+          onClick={handleTakePhoto}
           disabled={!isActive}
           aria-label="Take photo"
         >
           <FontAwesomeIcon icon={faCamera} />
         </button>
         
-        <div className="spacer"></div> {/* Empty div for layout */}
+        <div className="spacer"></div>
       </div>
     </div>
   );
