@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane } from '@fortawesome/free-solid-svg-icons';
-import { getPatientById, updatePatientStatus } from '../services/patientService';
+import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { getPatientById, updatePatientStatus, deletePatient } from '../services/patientService';
 import '../styles/PatientDetail.css';
 import CameraCapture from '../components/CameraCapture';
 import { updatePatientPhoto } from '../services/patientService';
@@ -63,36 +63,34 @@ const PatientDetail = () => {
   };
 
   const handleTakePhoto = () => {
-  setShowCamera(true);
-};
+    setShowCamera(true);
+  };
 
-// In PatientDetail.js
-
-const handleCapturePhoto = async (photoData) => {
-  console.log("Photo captured! Data length:", photoData?.length || 0);
-  // Add a simple validation check for the image data
-  if (!photoData || photoData.length < 1000) {
-    console.error("Invalid photo data received");
-    alert("Photo couldn't be captured. Please try again.");
-    return;
-  }
-  
-  try {
-    // Show some kind of loading indicator
-    setLoading(true);
+  const handleCapturePhoto = async (photoData) => {
+    console.log("Photo captured! Data length:", photoData?.length || 0);
+    // Add a simple validation check for the image data
+    if (!photoData || photoData.length < 1000) {
+      console.error("Invalid photo data received");
+      alert("Photo couldn't be captured. Please try again.");
+      return;
+    }
     
-    const updatedPatient = await updatePatientPhoto(id, photoData);
-    console.log("Patient photo updated successfully");
-    
-    setPatient(updatedPatient);
-    setShowCamera(false);
-  } catch (error) {
-    console.error('Error updating photo:', error);
-    alert('Failed to update photo: ' + (error.message || 'Unknown error'));
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      // Show some kind of loading indicator
+      setLoading(true);
+      
+      const updatedPatient = await updatePatientPhoto(id, photoData);
+      console.log("Patient photo updated successfully");
+      
+      setPatient(updatedPatient);
+      setShowCamera(false);
+    } catch (error) {
+      console.error('Error updating photo:', error);
+      alert('Failed to update photo: ' + (error.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGenerateQR = () => {
     setShowQRCode(true);
@@ -107,6 +105,20 @@ const handleCapturePhoto = async (photoData) => {
     // Navigate to send update page (to be implemented later)
     alert('Send update functionality will be implemented in the next phase');
     // navigate(`/send-update/${id}`);
+  };
+
+  // Add this delete handler function
+  const handleDeletePatient = async () => {
+    if (window.confirm(`Are you sure you want to delete ${patient.name}?`)) {
+      try {
+        await deletePatient(id);
+        // Navigate back to the home page
+        navigate('/');
+      } catch (error) {
+        console.error('Error deleting patient:', error);
+        alert('Failed to delete patient');
+      }
+    }
   };
 
   if (loading) {
@@ -195,11 +207,21 @@ const handleCapturePhoto = async (photoData) => {
           <FontAwesomeIcon icon={faQrcode} />
           View/Print QR Code
         </button>
+        
+        {/* Add this button */}
+        <button 
+          className="action-button danger"
+          onClick={handleDeletePatient}
+        >
+          <FontAwesomeIcon icon={faTrash} />
+          Delete Patient
+        </button>
       </div>
+      
       {showCamera && (
-  <SimpleCameraCapture
-    onCapture={handleCapturePhoto}
-    onClose={() => setShowCamera(false)}
+        <SimpleCameraCapture
+          onCapture={handleCapturePhoto}
+          onClose={() => setShowCamera(false)}
         />
       )}
     </div>

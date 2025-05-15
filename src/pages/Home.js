@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faQrcode, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PatientCard from '../components/PatientCard';
 import NewPatientForm from '../components/NewPatientForm';
-import { getPatients, addPatient } from '../services/patientService';
+import { getPatients, addPatient, deletePatient } from '../services/patientService';
 import '../styles/Home.css';
 
 const Home = () => {
@@ -56,6 +56,22 @@ const Home = () => {
     }
   };
 
+  // Add this delete handler function
+  const handleDeletePatient = async (id) => {
+    try {
+      setLoading(true);
+      await deletePatient(id);
+      
+      // Remove the patient from state
+      setPatients(prevPatients => prevPatients.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Error deleting patient:', error);
+      alert('Failed to delete patient');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="home-container">
       <div className="search-container">
@@ -82,6 +98,7 @@ const Home = () => {
               key={patient.id} 
               patient={patient} 
               onClick={() => navigate(`/patient/${patient.id}`)} 
+              onDelete={handleDeletePatient}
             />
           ))
         )}

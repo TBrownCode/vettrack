@@ -182,3 +182,13 @@
   .error-container {
     color: var(--error-color);
   }
+
+  .action-button.danger {
+  background-color: #f44336; /* Red color for danger */
+  color: white;
+  border: none;
+}
+
+.action-button.danger:hover {
+  background-color: #d32f2f; /* Darker red on hover */
+}

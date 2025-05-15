@@ -118,3 +118,21 @@ export const addPatient = async (patientData) => {
   
   return newPatient;
 };
+
+// Delete patient
+export const deletePatient = async (id) => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  // Find the patient index
+  const patientIndex = mockPatients.findIndex(p => p.id === id);
+  
+  if (patientIndex === -1) {
+    throw new Error(`Patient with ID ${id} not found`);
+  }
+  
+  // Remove the patient from the array
+  mockPatients.splice(patientIndex, 1);
+  
+  return { success: true, message: 'Patient deleted successfully' };
+};
