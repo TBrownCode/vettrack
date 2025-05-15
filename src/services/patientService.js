@@ -101,3 +101,20 @@ export const updatePatientPhoto = async (id, photoData) => {
   
   return mockPatients[patientIndex];
 };
+
+// Add new patient
+export const addPatient = async (patientData) => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // In a real app, this would send the data to a backend
+  // For now, just add to our mock data
+  const newPatient = {
+    ...patientData,
+    lastUpdate: new Date().toLocaleTimeString()
+  };
+  
+  mockPatients.unshift(newPatient); // Add to beginning of array
+  
+  return newPatient;
+};

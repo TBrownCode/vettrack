@@ -1,15 +1,18 @@
+// In src/pages/Home.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faQrcode } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faQrcode, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PatientCard from '../components/PatientCard';
-import { getPatients } from '../services/patientService';
+import NewPatientForm from '../components/NewPatientForm';
+import { getPatients, addPatient } from '../services/patientService';
 import '../styles/Home.css';
 
 const Home = () => {
   const [patients, setPatients] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,6 +37,24 @@ const Home = () => {
     patient.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
     patient.owner.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  const handleAddPatient = async (newPatient) => {
+    try {
+      setLoading(true);
+      const savedPatient = await addPatient(newPatient);
+      
+      // Add the new patient to the state
+      setPatients(prevPatients => [savedPatient, ...prevPatients]);
+      
+      // Close the form
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Error adding patient:', error);
+      alert('Failed to add patient');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="home-container">
@@ -59,12 +80,14 @@ const Home = () => {
           filteredPatients.map(patient => (
             <PatientCard 
               key={patient.id} 
-              patient={patient}
+              patient={patient} 
+              onClick={() => navigate(`/patient/${patient.id}`)} 
             />
           ))
         )}
       </div>
 
+      {/* Scan QR button */}
       <button 
         className="scan-button" 
         onClick={() => navigate('/scan')}
@@ -72,6 +95,40 @@ const Home = () => {
       >
         <FontAwesomeIcon icon={faQrcode} />
       </button>
+      
+      {/* Add patient button - with direct inline styles to ensure it appears */}
+      <button 
+        style={{
+          position: 'fixed',
+          bottom: '80px',
+          right: '20px',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          backgroundColor: '#34a853', /* Green color */
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.5rem',
+          border: 'none',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+          zIndex: 5,
+          cursor: 'pointer'
+        }}
+        onClick={() => setShowAddForm(true)}
+        aria-label="Add new patient"
+      >
+        <FontAwesomeIcon icon={faPlus} />
+      </button>
+      
+      {/* Add new patient form */}
+      {showAddForm && (
+        <NewPatientForm 
+          onSave={handleAddPatient}
+          onCancel={() => setShowAddForm(false)}
+        />
+      )}
     </div>
   );
 };

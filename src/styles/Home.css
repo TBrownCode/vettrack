@@ -39,10 +39,28 @@
     padding: 24px;
     color: var(--text-secondary);
   }
+
+  .add-button {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--secondary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+}
   
   .scan-button {
     position: fixed;
-    bottom: 20px;
+    bottom: 150px;
     right: 20px;
     width: 56px;
     height: 56px;
