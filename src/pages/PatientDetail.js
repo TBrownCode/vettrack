@@ -7,6 +7,7 @@ import '../styles/PatientDetail.css';
 import CameraCapture from '../components/CameraCapture';
 import { updatePatientPhoto } from '../services/patientService';
 import SimpleCameraCapture from '../components/SimpleCameraCapture';
+import QRCodeGenerator from '../components/QRCodeGenerator';
 
 const statusOptions = [
   'Admitted',
@@ -94,11 +95,6 @@ const PatientDetail = () => {
 
   const handleGenerateQR = () => {
     setShowQRCode(true);
-    // In a real implementation, this would generate a QR code
-    setTimeout(() => {
-      alert('QR code generation will be implemented in the next phase');
-      setShowQRCode(false);
-    }, 500);
   };
 
   const handleSendUpdate = () => {
@@ -222,6 +218,13 @@ const PatientDetail = () => {
         <SimpleCameraCapture
           onCapture={handleCapturePhoto}
           onClose={() => setShowCamera(false)}
+        />
+      )}
+      
+      {showQRCode && (
+        <QRCodeGenerator 
+          patient={patient}
+          onClose={() => setShowQRCode(false)}
         />
       )}
     </div>
