@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faQrcode, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PatientCard from '../components/PatientCard';
 import NewPatientForm from '../components/NewPatientForm';
+import QRCodeScanner from '../components/QRCodeScanner'; // Add this import
 import { getPatients, addPatient, deletePatient } from '../services/patientService';
 import '../styles/Home.css';
 
@@ -13,6 +14,7 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showScanner, setShowScanner] = useState(false); // Add this state
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,6 +74,13 @@ const Home = () => {
     }
   };
 
+  // Add this handler for QR scanning
+  const handleScanSuccess = (patientId) => {
+    // Navigate to patient details
+    navigate(`/patient/${patientId}`);
+    setShowScanner(false);
+  };
+
   return (
     <div className="home-container">
       <div className="search-container">
@@ -104,16 +113,16 @@ const Home = () => {
         )}
       </div>
 
-      {/* Scan QR button */}
+      {/* Scan QR button - updated to open scanner directly */}
       <button 
         className="scan-button" 
-        onClick={() => navigate('/scan')}
+        onClick={() => setShowScanner(true)} // Changed from navigate('/scan')
         aria-label="Scan QR code"
       >
         <FontAwesomeIcon icon={faQrcode} />
       </button>
       
-      {/* Add patient button - with direct inline styles to ensure it appears */}
+      {/* Add patient button */}
       <button 
         style={{
           position: 'fixed',
@@ -144,6 +153,14 @@ const Home = () => {
         <NewPatientForm 
           onSave={handleAddPatient}
           onCancel={() => setShowAddForm(false)}
+        />
+      )}
+      
+      {/* Add QR code scanner - NEW */}
+      {showScanner && (
+        <QRCodeScanner 
+          onScan={handleScanSuccess}
+          onClose={() => setShowScanner(false)}
         />
       )}
     </div>

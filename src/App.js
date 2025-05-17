@@ -4,9 +4,8 @@ import './App.css';
 import Home from './pages/Home';
 import PatientDetail from './pages/PatientDetail';
 
-// Placeholder components (we'll create these later)
-//const PatientDetail = () => <div>Patient Detail Page</div>;
-const Scan = () => <div>QR Scanner Page</div>;
+// We no longer need the Scan placeholder component
+// const Scan = () => <div>QR Scanner Page</div>;
 
 function App() {
   return (
@@ -19,7 +18,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/patient/:id" element={<PatientDetail />} />
-            <Route path="/scan" element={<Scan />} />
+            {/* Removed the /scan route since we're showing the scanner directly in Home */}
           </Routes>
         </main>
         <footer className="App-footer">
