@@ -24,9 +24,15 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
     let template = MESSAGE_TEMPLATES[messageType] || '';
     
     // Replace placeholders with actual values
-    return template
+    let message = template
       .replace('{pet_name}', patient.name)
       .replace('{status}', patient.status);
+    
+    // Add status tracker link
+    const statusUrl = `${window.location.origin}/status/${patient.id}`;
+    message += `\n\nTrack ${patient.name}'s status in real-time: ${statusUrl}`;
+    
+    return message;
   };
   
   // Combine template and custom message

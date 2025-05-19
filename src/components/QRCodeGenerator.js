@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faPrint, faDownload, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faPrint, faDownload, faSync, faCopy } from '@fortawesome/free-solid-svg-icons';
 import '../styles/QRCodeGenerator.css';
 
 const QRCodeGenerator = ({ patient, onClose }) => {
@@ -95,6 +95,12 @@ const QRCodeGenerator = ({ patient, onClose }) => {
               margin-top: 10px;
               text-align: center;
             }
+            .status-link {
+              font-size: 12px;
+              color: #4285f4;
+              margin-top: 5px;
+              text-align: center;
+            }
             @media print {
               @page {
                 size: 58mm 40mm; /* Label size - adjust as needed */
@@ -117,6 +123,7 @@ const QRCodeGenerator = ({ patient, onClose }) => {
             </div>
             <div class="clinic-info">
               <p>VetTrack Patient Tracking</p>
+              <p class="status-link">Status: ${window.location.origin}/status/${patient.id}</p>
             </div>
           </div>
         </body>
@@ -193,6 +200,25 @@ const QRCodeGenerator = ({ patient, onClose }) => {
             <div className="qr-instructions">
               <p>Scan this code to quickly access patient information.</p>
               <p>Print and attach to patient collar or cage.</p>
+            </div>
+            
+            {/* New section for owner status link */}
+            <div className="owner-link-section">
+              <h4>Share with Owner</h4>
+              <p>Provide this link to the pet owner to track their pet's status:</p>
+              <div className="status-link">
+                {`${window.location.origin}/status/${patient.id}`}
+              </div>
+              <button 
+                className="qr-action-button"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/status/${patient.id}`);
+                  alert('Link copied to clipboard!');
+                }}
+              >
+                <FontAwesomeIcon icon={faCopy} />
+                Copy Link
+              </button>
             </div>
           </div>
         )}

@@ -1,0 +1,218 @@
+/* src/styles/PatientStatusTracker.css */
+.status-tracker-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 16px;
+}
+
+.tracker-header {
+  width: 100%;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 24px;
+  border-radius: 8px;
+}
+
+.tracker-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pet-status-card {
+  width: 100%;
+  max-width: 500px;
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.pet-photo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--primary-color);
+  margin-bottom: 16px;
+}
+
+.pet-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pet-name {
+  margin: 0 0 4px 0;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.pet-info {
+  margin: 0 0 24px 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.status-display {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.status-display h3 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.status-badge-large {
+  padding: 12px 24px;
+  border-radius: 24px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.status-surgery {
+  background-color: #fff0e8;
+  color: #fa903e;
+}
+
+.status-recovery {
+  background-color: #e6f4ea;
+  color: #1e8e3e;
+}
+
+.status-admitted {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+}
+
+.status-discharge {
+  background-color: #f3e8fd;
+  color: #a142f4;
+}
+
+.status-default {
+  background-color: #f5f5f5;
+  color: #5f6368;
+}
+
+.status-time {
+  margin: 8px 0 0 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.status-message {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 16px;
+  width: 100%;
+  margin-bottom: 24px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.clinic-info {
+  width: 100%;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.clinic-info p {
+  margin: 0 0 8px 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.contact {
+  font-weight: 500;
+  color: var(--primary-color) !important;
+}
+
+.refresh-note {
+  width: 100%;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 16px;
+  font-style: italic;
+}
+
+.tracker-footer {
+  text-align: center;
+  padding: 16px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.loading-state, .error-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+}
+
+.loading-animation, .error-message {
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.loading-animation svg {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 16px;
+}
+
+.error-message svg {
+  font-size: 3rem;
+  color: var(--primary-color);
+  margin-bottom: 16px;
+}
+
+.error-message h2 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.home-link {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .pet-status-card {
+    padding: 16px;
+  }
+  
+  .pet-photo {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .status-badge-large {
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+}
