@@ -136,3 +136,34 @@ export const deletePatient = async (id) => {
   
   return { success: true, message: 'Patient deleted successfully' };
 };
+
+// Store sent updates in mock data for demo purposes
+const sentUpdates = [];
+
+// Send update to owner
+export const sendPatientUpdate = async (updateData) => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // In a real app, this would send an actual SMS/email
+  console.log('Sending update:', updateData);
+  
+  // Add to our mock sent updates
+  const update = {
+    id: 'UP' + Math.floor(1000 + Math.random() * 9000), // Simple ID
+    ...updateData,
+    sentAt: new Date().toISOString()
+  };
+  
+  sentUpdates.push(update);
+  
+  return update;
+};
+
+// Get updates for a patient
+export const getPatientUpdates = async (patientId) => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  return sentUpdates.filter(update => update.patientId === patientId);
+};

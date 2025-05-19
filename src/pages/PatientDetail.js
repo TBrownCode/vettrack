@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { getPatientById, updatePatientStatus, deletePatient } from '../services/patientService';
+import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate } from '../services/patientService';
 import '../styles/PatientDetail.css';
 import CameraCapture from '../components/CameraCapture';
 import { updatePatientPhoto } from '../services/patientService';
 import SimpleCameraCapture from '../components/SimpleCameraCapture';
 import QRCodeGenerator from '../components/QRCodeGenerator';
+import SendUpdateForm from '../components/SendUpdateForm'; // Add this import
+import UpdateConfirmation from '../components/UpdateConfirmation'; // Add this import
 
 const statusOptions = [
   'Admitted',
@@ -30,6 +32,8 @@ const PatientDetail = () => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [showSendUpdate, setShowSendUpdate] = useState(false); // Add this state
+  const [showConfirmation, setShowConfirmation] = useState(false); // Add this state
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -98,9 +102,21 @@ const PatientDetail = () => {
   };
 
   const handleSendUpdate = () => {
-    // Navigate to send update page (to be implemented later)
-    alert('Send update functionality will be implemented in the next phase');
-    // navigate(`/send-update/${id}`);
+    // Open the send update form instead of showing an alert
+    setShowSendUpdate(true);
+  };
+
+  const handleUpdateSent = async (updateData) => {
+    try {
+      // Send the update
+      await sendPatientUpdate(updateData);
+      
+      // Show confirmation
+      setShowConfirmation(true);
+    } catch (error) {
+      console.error('Error sending update:', error);
+      alert('Failed to send update');
+    }
   };
 
   // Add this delete handler function
@@ -204,7 +220,6 @@ const PatientDetail = () => {
           View/Print QR Code
         </button>
         
-        {/* Add this button */}
         <button 
           className="action-button danger"
           onClick={handleDeletePatient}
@@ -225,6 +240,21 @@ const PatientDetail = () => {
         <QRCodeGenerator 
           patient={patient}
           onClose={() => setShowQRCode(false)}
+        />
+      )}
+      
+      {/* Add these new conditional renders */}
+      {showSendUpdate && (
+        <SendUpdateForm
+          patient={patient}
+          onSend={handleUpdateSent}
+          onClose={() => setShowSendUpdate(false)}
+        />
+      )}
+      
+      {showConfirmation && (
+        <UpdateConfirmation
+          onDismiss={() => setShowConfirmation(false)}
         />
       )}
     </div>

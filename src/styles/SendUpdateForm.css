@@ -1,0 +1,219 @@
+/* src/styles/SendUpdateForm.css */
+.send-update-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--surface-color);
+  z-index: 100;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.update-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background-color: var(--primary-color);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.update-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.update-form {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.patient-info-summary {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.patient-photo-small {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 12px;
+  background-color: #e0e0e0;
+}
+
+.patient-photo-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.patient-info-text {
+  flex: 1;
+}
+
+.patient-info-text h4 {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+}
+
+.patient-info-text p {
+  margin: 0 0 4px 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.current-status {
+  font-weight: 500;
+  color: var(--primary-color) !important;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-row label {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.form-row select,
+.form-row textarea {
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.message-preview {
+  padding: 12px;
+  background-color: #f9f9f9;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.send-method-options {
+  display: flex;
+  gap: 16px;
+}
+
+.method-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.photo-preview {
+  position: relative;
+  width: 200px;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-icon {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 6px;
+  border-radius: 50%;
+  font-size: 1rem;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cancel-button {
+  padding: 12px 16px;
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.send-button {
+  padding: 12px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.send-button:disabled,
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* For smaller screens */
+@media (max-width: 480px) {
+  .form-buttons {
+    flex-direction: column;
+  }
+  
+  .cancel-button,
+  .send-button {
+    width: 100%;
+  }
+}

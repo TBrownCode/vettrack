@@ -1,0 +1,52 @@
+/* src/styles/UpdateConfirmation.css */
+.update-confirmation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.confirmation-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  width: 80%;
+  max-width: 320px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease-out;
+}
+
+.confirmation-icon {
+  font-size: 3rem;
+  color: #4CAF50;
+  margin-bottom: 16px;
+}
+
+.confirmation-content h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.confirmation-content p {
+  margin: 0;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
