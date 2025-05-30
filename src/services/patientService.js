@@ -1,169 +1,217 @@
-// Mock data service for development
-const mockPatients = [
-    { 
-      id: 'PT001', 
-      name: 'Max', 
-      species: 'Dog',
-      breed: 'Golden Retriever',
-      owner: 'Sarah Johnson',
-      phone: '555-123-4567',
-      status: 'Admitted',
-      lastUpdate: new Date().toLocaleTimeString(),
-      photoUrl: '/images/placeholder-dog.jpg'
-    },
-    { 
-      id: 'PT002', 
-      name: 'Luna', 
-      species: 'Cat',
-      breed: 'Siamese',
-      owner: 'Michael Chen',
-      phone: '555-987-6543',
-      status: 'In Surgery',
-      lastUpdate: new Date(Date.now() - 20 * 60000).toLocaleTimeString(),
-      photoUrl: '/images/placeholder-cat.jpg'
-    },
-    { 
-      id: 'PT003', 
-      name: 'Bella', 
-      species: 'Dog',
-      breed: 'Poodle',
-      owner: 'Jessica White',
-      phone: '555-456-7890',
-      status: 'In Recovery',
-      lastUpdate: new Date(Date.now() - 5 * 60000).toLocaleTimeString(),
-      photoUrl: '/images/placeholder-dog.jpg'
-    }
-  ];
-  
-  // Get all patients
-  export const getPatients = async () => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return [...mockPatients];
-  };
-  
-  // Get patient by ID
-  export const getPatientById = async (id) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const patient = mockPatients.find(p => p.id === id);
-    
-    if (!patient) {
-      throw new Error(`Patient with ID ${id} not found`);
-    }
-    
-    return {...patient};
-  };
-  
-  // Add more service functions as needed
-  // Add this function to your existing patientService.js file:
+// src/services/patientService.js - Updated with Supabase
+import { supabase } from '../lib/supabase';
+
+// Get all patients
+export const getPatients = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .select(`
+        *,
+        clinic:clinics(name)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Transform data to match your existing format
+    return data.map(patient => ({
+      id: patient.id,
+      name: patient.name,
+      species: patient.species,
+      breed: patient.breed || '',
+      owner: patient.owner_name,
+      phone: patient.owner_phone,
+      status: patient.status,
+      photoUrl: patient.photo_url,
+      lastUpdate: new Date(patient.updated_at).toLocaleTimeString()
+    }));
+  } catch (error) {
+    console.error('Error fetching patients:', error);
+    throw error;
+  }
+};
+
+// Get patient by ID
+export const getPatientById = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .select(`
+        *,
+        clinic:clinics(name)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    if (!data) throw new Error(`Patient with ID ${id} not found`);
+
+    // Transform data to match your existing format
+    return {
+      id: data.id,
+      name: data.name,
+      species: data.species,
+      breed: data.breed || '',
+      owner: data.owner_name,
+      phone: data.owner_phone,
+      status: data.status,
+      photoUrl: data.photo_url,
+      lastUpdate: new Date(data.updated_at).toLocaleTimeString()
+    };
+  } catch (error) {
+    console.error('Error fetching patient:', error);
+    throw error;
+  }
+};
 
 // Update patient status
 export const updatePatientStatus = async (id, newStatus) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 400));
-  
-  const patientIndex = mockPatients.findIndex(p => p.id === id);
-  
-  if (patientIndex === -1) {
-    throw new Error(`Patient with ID ${id} not found`);
-  }
-  
-  mockPatients[patientIndex] = {
-    ...mockPatients[patientIndex],
-    status: newStatus,
-    lastUpdate: new Date().toLocaleTimeString()
-  };
-  
-  return mockPatients[patientIndex];
-};
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .update({ 
+        status: newStatus, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', id)
+      .select()
+      .single();
 
-// Update patient photo
-export const updatePatientPhoto = async (id, photoData) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const patientIndex = mockPatients.findIndex(p => p.id === id);
-  
-  if (patientIndex === -1) {
-    throw new Error(`Patient with ID ${id} not found`);
+    if (error) throw error;
+
+    // Also log the status change
+    await supabase
+      .from('status_history')
+      .insert({
+        patient_id: id,
+        new_status: newStatus,
+        changed_by: 'Staff User', // We'll improve this with auth later
+      });
+
+    return data;
+  } catch (error) {
+    console.error('Error updating patient status:', error);
+    throw error;
   }
-  
-  // In a real app, this would upload the photo to a server
-  // For now, we'll just update the photoUrl to the data URL
-  mockPatients[patientIndex] = {
-    ...mockPatients[patientIndex],
-    photoUrl: photoData,
-    lastUpdate: new Date().toLocaleTimeString()
-  };
-  
-  return mockPatients[patientIndex];
 };
 
 // Add new patient
 export const addPatient = async (patientData) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // In a real app, this would send the data to a backend
-  // For now, just add to our mock data
-  const newPatient = {
-    ...patientData,
-    lastUpdate: new Date().toLocaleTimeString()
-  };
-  
-  mockPatients.unshift(newPatient); // Add to beginning of array
-  
-  return newPatient;
+  try {
+    // Get clinic ID (for now, we'll use the test clinic)
+    const { data: clinic } = await supabase
+      .from('clinics')
+      .select('id')
+      .eq('name', 'Happy Paws Veterinary Clinic')
+      .single();
+
+    const newPatient = {
+      id: patientData.id,
+      clinic_id: clinic.id,
+      name: patientData.name,
+      species: patientData.species,
+      breed: patientData.breed || '',
+      owner_name: patientData.owner,
+      owner_phone: patientData.phone,
+      status: patientData.status || 'Admitted',
+      photo_url: patientData.photoUrl,
+    };
+
+    const { data, error } = await supabase
+      .from('patients')
+      .insert(newPatient)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Transform back to your format
+    return {
+      id: data.id,
+      name: data.name,
+      species: data.species,
+      breed: data.breed || '',
+      owner: data.owner_name,
+      phone: data.owner_phone,
+      status: data.status,
+      photoUrl: data.photo_url,
+      lastUpdate: new Date(data.created_at).toLocaleTimeString()
+    };
+  } catch (error) {
+    console.error('Error adding patient:', error);
+    throw error;
+  }
 };
 
 // Delete patient
 export const deletePatient = async (id) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  // Find the patient index
-  const patientIndex = mockPatients.findIndex(p => p.id === id);
-  
-  if (patientIndex === -1) {
-    throw new Error(`Patient with ID ${id} not found`);
+  try {
+    const { error } = await supabase
+      .from('patients')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return { success: true, message: 'Patient deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting patient:', error);
+    throw error;
   }
-  
-  // Remove the patient from the array
-  mockPatients.splice(patientIndex, 1);
-  
-  return { success: true, message: 'Patient deleted successfully' };
 };
 
-// Store sent updates in mock data for demo purposes
-const sentUpdates = [];
+// Update patient photo
+export const updatePatientPhoto = async (id, photoData) => {
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .update({ 
+        photo_url: photoData,
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Transform back to your format
+    return {
+      id: data.id,
+      name: data.name,
+      species: data.species,
+      breed: data.breed || '',
+      owner: data.owner_name,
+      phone: data.owner_phone,
+      status: data.status,
+      photoUrl: data.photo_url,
+      lastUpdate: new Date(data.updated_at).toLocaleTimeString()
+    };
+  } catch (error) {
+    console.error('Error updating photo:', error);
+    throw error;
+  }
+};
 
 // Send update to owner
 export const sendPatientUpdate = async (updateData) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // In a real app, this would send an actual SMS/email
-  console.log('Sending update:', updateData);
-  
-  // Add to our mock sent updates
-  const update = {
-    id: 'UP' + Math.floor(1000 + Math.random() * 9000), // Simple ID
-    ...updateData,
-    sentAt: new Date().toISOString()
-  };
-  
-  sentUpdates.push(update);
-  
-  return update;
-};
+  try {
+    const { data, error } = await supabase
+      .from('patient_updates')
+      .insert({
+        patient_id: updateData.patientId,
+        message_type: updateData.messageType,
+        message_content: updateData.message,
+        send_method: updateData.sendVia,
+        include_photo: updateData.includePhoto,
+      })
+      .select()
+      .single();
 
-// Get updates for a patient
-export const getPatientUpdates = async (patientId) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  return sentUpdates.filter(update => update.patientId === patientId);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error sending update:', error);
+    throw error;
+  }
 };
