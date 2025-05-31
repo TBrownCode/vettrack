@@ -1,12 +1,13 @@
-// In src/pages/Home.js test comment
+// In src/pages/Home.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faQrcode, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PatientCard from '../components/PatientCard';
 import NewPatientForm from '../components/NewPatientForm';
-import QRCodeScanner from '../components/QRCodeScanner'; // Add this import
+import QRCodeScanner from '../components/QRCodeScanner';
 import { getPatients, addPatient, deletePatient } from '../services/patientService';
+import { useAuth } from '../contexts/AuthContext'; // Add this import
 import '../styles/Home.css';
 
 const Home = () => {
@@ -14,8 +15,11 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showScanner, setShowScanner] = useState(false); // Add this state
+  const [showScanner, setShowScanner] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false); // Add this state
   const navigate = useNavigate();
+  
+  const { user, signOut } = useAuth(); // Add this
 
   useEffect(() => {
     // Fetch patients
@@ -32,6 +36,18 @@ const Home = () => {
 
     loadPatients();
   }, []);
+
+  // Add this useEffect for click outside to close menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserMenu && !event.target.closest('.user-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserMenu]);
 
   // Filter patients based on search query
   const filteredPatients = patients.filter(patient => 
@@ -81,8 +97,50 @@ const Home = () => {
     setShowScanner(false);
   };
 
+  // Add this logout handler
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // Navigation will happen automatically via AuthContext
+    } catch (error) {
+      console.error('Error signing out:', error);
+      alert('Error signing out');
+    }
+  };
+
   return (
     <div className="home-container">
+      {/* Add user menu header */}
+      <div className="user-header">
+        <div className="user-info">
+          <span className="welcome-text">Welcome, {user?.user_metadata?.full_name || user?.email}</span>
+          <span className="user-role">{user?.user_metadata?.role || 'Staff'}</span>
+        </div>
+        <div className="user-menu-container">
+          <button 
+            className="user-menu-button"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+          >
+            <div className="user-avatar">
+              {(user?.user_metadata?.full_name || user?.email)?.charAt(0).toUpperCase()}
+            </div>
+          </button>
+          
+          {showUserMenu && (
+            <div className="user-menu-dropdown">
+              <div className="user-menu-item user-details">
+                <strong>{user?.user_metadata?.full_name || 'Staff Member'}</strong>
+                <small>{user?.email}</small>
+              </div>
+              <hr className="user-menu-divider" />
+              <button className="user-menu-item" onClick={handleLogout}>
+                Sign Out
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="search-container">
         <div className="search-input-wrapper">
           <FontAwesomeIcon icon={faSearch} className="search-icon" />
@@ -116,7 +174,7 @@ const Home = () => {
       {/* Scan QR button - updated to open scanner directly */}
       <button 
         className="scan-button" 
-        onClick={() => setShowScanner(true)} // Changed from navigate('/scan')
+        onClick={() => setShowScanner(true)}
         aria-label="Scan QR code"
       >
         <FontAwesomeIcon icon={faQrcode} />
@@ -156,7 +214,7 @@ const Home = () => {
         />
       )}
       
-      {/* Add QR code scanner - NEW */}
+      {/* Add QR code scanner */}
       {showScanner && (
         <QRCodeScanner 
           onScan={handleScanSuccess}
