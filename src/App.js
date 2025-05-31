@@ -1,33 +1,54 @@
+// src/App.js - Updated with Authentication
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import PatientDetail from './pages/PatientDetail';
 import PatientStatusTracker from './pages/PatientStatusTracker';
 
-// We no longer need the Scan placeholder component
-// const Scan = () => <div>QR Scanner Page</div>;
-
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <header className="App-header">
-          <h1>VetTrack</h1>
-        </header>
-        <main>
+    <AuthProvider>
+      <Router>
+        <div className="App">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/patient/:id" element={<PatientDetail />} />
+            {/* Public route for owner status tracking */}
             <Route path="/status/:id" element={<PatientStatusTracker />} />
-            {/* Removed the /scan route since we're showing the scanner directly in Home */}
+            
+            {/* Protected routes for staff */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <header className="App-header">
+                  <h1>VetTrack</h1>
+                </header>
+                <main>
+                  <Home />
+                </main>
+                <footer className="App-footer">
+                  <p>VetTrack - Veterinary Patient Tracking System</p>
+                </footer>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/patient/:id" element={
+              <ProtectedRoute>
+                <header className="App-header">
+                  <h1>VetTrack</h1>
+                </header>
+                <main>
+                  <PatientDetail />
+                </main>
+                <footer className="App-footer">
+                  <p>VetTrack - Veterinary Patient Tracking System</p>
+                </footer>
+              </ProtectedRoute>
+            } />
           </Routes>
-        </main>
-        <footer className="App-footer">
-          <p>VetTrack - Veterinary Patient Tracking System</p>
-        </footer>
-      </div>
-    </Router>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
