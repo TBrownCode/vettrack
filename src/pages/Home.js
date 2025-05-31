@@ -1,4 +1,4 @@
-// In src/pages/Home.js
+// In src/pages/Home.js test comment
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
