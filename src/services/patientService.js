@@ -1,5 +1,6 @@
-// src/services/patientService.js - Updated with Supabase
+// src/services/patientService.js - Updated with Supabase and Photo Storage
 import { supabase } from '../lib/supabase';
+import { uploadPhotoFromDataURL } from './photoService'; // Add this import
 
 // Get all patients
 export const getPatients = async () => {
@@ -96,7 +97,7 @@ export const updatePatientStatus = async (id, newStatus) => {
   }
 };
 
-// Add new patient
+// Add new patient - UPDATED
 export const addPatient = async (patientData) => {
   try {
     // Get clinic ID (for now, we'll use the test clinic)
@@ -105,6 +106,15 @@ export const addPatient = async (patientData) => {
       .select('id')
       .eq('name', 'Happy Paws Veterinary Clinic')
       .single();
+
+    let photoUrl = null;
+    
+    // Upload photo if provided and it's a data URL
+    if (patientData.photoUrl && patientData.photoUrl.startsWith('data:')) {
+      photoUrl = await uploadPhotoFromDataURL(patientData.photoUrl, patientData.id);
+    } else {
+      photoUrl = patientData.photoUrl;
+    }
 
     const newPatient = {
       id: patientData.id,
@@ -115,7 +125,7 @@ export const addPatient = async (patientData) => {
       owner_name: patientData.owner,
       owner_phone: patientData.phone,
       status: patientData.status || 'Admitted',
-      photo_url: patientData.photoUrl,
+      photo_url: photoUrl,
     };
 
     const { data, error } = await supabase
@@ -160,13 +170,16 @@ export const deletePatient = async (id) => {
   }
 };
 
-// Update patient photo
+// Update patient photo - UPDATED
 export const updatePatientPhoto = async (id, photoData) => {
   try {
+    // Upload photo to Supabase Storage and get URL
+    const photoUrl = await uploadPhotoFromDataURL(photoData, id);
+    
     const { data, error } = await supabase
       .from('patients')
       .update({ 
-        photo_url: photoData,
+        photo_url: photoUrl,
         updated_at: new Date().toISOString() 
       })
       .eq('id', id)
