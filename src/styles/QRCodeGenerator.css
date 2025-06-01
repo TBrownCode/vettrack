@@ -1,3 +1,4 @@
+/* src/styles/QRCodeGenerator.css - Fixed mobile layout */
 .qr-code-modal {
   position: fixed;
   top: 0;
@@ -17,6 +18,7 @@
   padding: 16px;
   background-color: var(--primary-color);
   color: white;
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .qr-code-header h3 {
@@ -31,6 +33,9 @@
   color: white;
   font-size: 1.25rem;
   cursor: pointer;
+  padding: 8px;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .qr-code-content {
@@ -38,9 +43,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 24px;
+  padding: 24px 16px;
   overflow-y: auto;
+  /* Add safe area for mobile devices */
+  padding-top: max(24px, env(safe-area-inset-top));
 }
 
 .qr-loading {
@@ -48,6 +54,7 @@
   flex-direction: column;
   align-items: center;
   color: var(--text-secondary);
+  margin-top: 40px;
 }
 
 .spinner {
@@ -68,6 +75,7 @@
   text-align: center;
   padding: 16px;
   color: var(--error-color);
+  margin-top: 40px;
 }
 
 .qr-display {
@@ -75,37 +83,48 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 320px;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .qr-code-container {
-  padding: 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  padding: 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
   background-color: white;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  /* Ensure QR code container has proper spacing */
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  justify-content: center;
 }
 
 .qr-code-container img {
   display: block;
-  max-width: 100%;
+  width: 100%;
+  max-width: 240px;
   height: auto;
 }
 
 .qr-patient-info {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  width: 100%;
 }
 
 .qr-patient-info h4 {
-  margin: 0 0 4px 0;
+  margin: 0 0 8px 0;
   font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .qr-patient-id {
   margin: 0 0 4px 0;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-secondary);
+  font-size: 1rem;
 }
 
 .qr-patient-details {
@@ -116,38 +135,79 @@
 
 .qr-instructions {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   font-size: 0.875rem;
   color: var(--text-secondary);
-  padding: 8px;
-  background-color: #f5f5f5;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
   border-radius: 8px;
   width: 100%;
+  border: 1px solid #e9ecef;
+}
+
+.owner-link-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+  width: 100%;
+}
+
+.owner-link-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.owner-link-section p {
+  margin: 0 0 12px 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.status-link {
+  background-color: #f5f5f5;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  word-break: break-all;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color);
+  font-family: monospace;
 }
 
 .qr-code-actions {
   display: flex;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
   padding: 16px;
   border-top: 1px solid var(--border-color);
+  background-color: #fafafa;
+  flex-shrink: 0; /* Prevent actions from shrinking */
+  /* Add safe area for mobile devices */
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 .qr-action-button {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
-  border-radius: 4px;
+  justify-content: center;
+  padding: 12px 20px;
+  border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
   border: none;
   background-color: var(--primary-color);
   color: white;
   cursor: pointer;
+  min-height: 44px; /* Better touch target */
+  flex: 1;
+  max-width: 160px;
 }
 
 .qr-action-button svg {
   margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .qr-action-button:disabled {
@@ -155,42 +215,91 @@
   cursor: not-allowed;
 }
 
+.qr-action-button:hover:not(:disabled) {
+  background-color: #3367d6;
+}
+
+/* Mobile-specific improvements */
 @media (max-width: 480px) {
+  .qr-code-content {
+    padding: 16px 12px;
+  }
+  
+  .qr-code-container {
+    padding: 16px;
+    max-width: 260px;
+  }
+  
+  .qr-code-container img {
+    max-width: 220px;
+  }
+  
   .qr-code-actions {
     flex-direction: column;
     gap: 8px;
+    padding: 12px;
   }
   
   .qr-action-button {
     width: 100%;
+    max-width: none;
     justify-content: center;
+  }
+  
+  .qr-patient-info h4 {
+    font-size: 1.125rem;
+  }
+  
+  .status-link {
+    font-size: 0.7rem;
+    padding: 10px;
+  }
+  
+  .owner-link-section {
+    margin-top: 20px;
+    padding-top: 16px;
   }
 }
 
-.owner-link-section {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-color);
-  width: 100%;
+/* Landscape mobile orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+  .qr-code-content {
+    padding: 12px;
+  }
+  
+  .qr-code-container {
+    max-width: 200px;
+  }
+  
+  .qr-code-container img {
+    max-width: 180px;
+  }
+  
+  .qr-display {
+    max-width: 100%;
+  }
 }
 
-.owner-link-section h4 {
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-}
-
-.owner-link-section p {
-  margin: 0 0 12px 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.status-link {
-  background-color: #f5f5f5;
-  padding: 10px;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  word-break: break-all;
-  margin-bottom: 12px;
-  border: 1px solid var(--border-color);
+/* Very small screens */
+@media (max-width: 360px) {
+  .qr-code-header {
+    padding: 12px;
+  }
+  
+  .qr-code-header h3 {
+    font-size: 1.125rem;
+  }
+  
+  .qr-code-content {
+    padding: 12px 8px;
+  }
+  
+  .qr-code-container {
+    padding: 12px;
+    max-width: 240px;
+  }
+  
+  .qr-code-container img {
+    max-width: 200px;
+  }
 }
