@@ -1,11 +1,9 @@
-// src/components/NewPatientForm.js
+// src/components/NewPatientForm.js - Updated with UUID generation
 import React, { useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
-// import CleanCameraCapture from './CleanCameraCapture';
 import SimpleCameraCapture from './SimpleCameraCapture';
 import '../styles/NewPatientForm.css';
-
 
 const NewPatientForm = ({ onSave, onCancel }) => {
   const [patient, setPatient] = useState({
@@ -73,14 +71,22 @@ const NewPatientForm = ({ onSave, onCancel }) => {
     return Object.keys(newErrors).length === 0;
   };
   
+  // Updated generatePatientId function
+  const generatePatientId = () => {
+    // Generate a UUID and take first 8 characters for a shorter, but still secure ID
+    const uuid = crypto.randomUUID();
+    // Format: PT-ABC12345 (PT- prefix + 8 random characters)
+    return 'PT-' + uuid.replace(/-/g, '').substring(0, 8).toUpperCase();
+  };
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      // Generate a simple ID (in a real app, this would come from the backend)
+      // Generate secure UUID-based ID instead of sequential number
       const newPatient = {
         ...patient,
-        id: 'PT' + Math.floor(1000 + Math.random() * 9000), // Simple 4-digit ID
+        id: generatePatientId(), // Now uses UUID instead of Math.random()
         lastUpdate: new Date().toLocaleTimeString()
       };
       
