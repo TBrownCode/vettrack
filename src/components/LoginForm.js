@@ -1,4 +1,4 @@
-// src/components/LoginForm.js
+// src/components/LoginForm.js - Login Only Version (NO SIGNUP)
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash, faPaw } from '@fortawesome/free-solid-svg-icons';
@@ -9,13 +9,10 @@ const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState('staff');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth(); // Only signIn, no signUp
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,18 +20,8 @@ const LoginForm = () => {
     setError('');
 
     try {
-      if (isSignUp) {
-        const { error } = await signUp(email, password, {
-          full_name: fullName,
-          role: role
-        });
-        if (error) throw error;
-        alert('Account created! You can now sign in.');
-        setIsSignUp(false);
-      } else {
-        const { error } = await signIn(email, password);
-        if (error) throw error;
-      }
+      const { error } = await signIn(email, password);
+      if (error) throw error;
     } catch (error) {
       setError(error.message);
     } finally {
@@ -54,35 +41,6 @@ const LoginForm = () => {
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}
           
-          {isSignUp && (
-            <>
-              <div className="form-group">
-                <label htmlFor="fullName">Full Name</label>
-                <input
-                  type="text"
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  placeholder="Enter your full name"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="role">Role</label>
-                <select
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                >
-                  <option value="staff">Staff</option>
-                  <option value="vet">Veterinarian</option>
-                  <option value="admin">Administrator</option>
-                </select>
-              </div>
-            </>
-          )}
-
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -121,23 +79,13 @@ const LoginForm = () => {
             className="login-button"
             disabled={loading}
           >
-            {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
+            {loading ? 'Please wait...' : 'Sign In'}
           </button>
 
           <div className="login-footer">
-            <button
-              type="button"
-              className="toggle-form"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError('');
-              }}
-            >
-              {isSignUp 
-                ? 'Already have an account? Sign In' 
-                : 'Need an account? Sign Up'
-              }
-            </button>
+            <p className="contact-admin">
+              Need an account? Contact your administrator.
+            </p>
           </div>
         </form>
       </div>
