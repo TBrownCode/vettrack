@@ -6,8 +6,9 @@ import { faSearch, faQrcode, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PatientCard from '../components/PatientCard';
 import NewPatientForm from '../components/NewPatientForm';
 import QRCodeScanner from '../components/QRCodeScanner';
+import UserManagement from '../components/UserManagement'; // Add this import
 import { getPatients, addPatient, deletePatient } from '../services/patientService';
-import { useAuth } from '../contexts/AuthContext'; // Add this import
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/Home.css';
 
 const Home = () => {
@@ -16,10 +17,11 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false); // Add this state
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showUserManagement, setShowUserManagement] = useState(false); // Add this state
   const navigate = useNavigate();
   
-  const { user, signOut } = useAuth(); // Add this
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     // Fetch patients
@@ -133,6 +135,23 @@ const Home = () => {
                 <small>{user?.email}</small>
               </div>
               <hr className="user-menu-divider" />
+              
+              {/* Add this section for admin users */}
+              {user?.user_metadata?.role === 'admin' && (
+                <>
+                  <button 
+                    className="user-menu-item" 
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setShowUserManagement(true);
+                    }}
+                  >
+                    Manage Users
+                  </button>
+                  <hr className="user-menu-divider" />
+                </>
+              )}
+              
               <button className="user-menu-item" onClick={handleLogout}>
                 Sign Out
               </button>
@@ -220,6 +239,11 @@ const Home = () => {
           onScan={handleScanSuccess}
           onClose={() => setShowScanner(false)}
         />
+      )}
+      
+      {/* Add user management component */}
+      {showUserManagement && (
+        <UserManagement onClose={() => setShowUserManagement(false)} />
       )}
     </div>
   );
