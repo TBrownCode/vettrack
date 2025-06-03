@@ -1,6 +1,6 @@
-// src/services/patientService.js - Updated with Supabase and Photo Storage
+// src/services/patientService.js - Updated with real SMS/Email integration
 import { supabase } from '../lib/supabase';
-import { uploadPhotoFromDataURL } from './photoService'; // Add this import
+import { uploadPhotoFromDataURL } from './photoService';
 
 // Get all patients
 export const getPatients = async () => {
@@ -23,6 +23,7 @@ export const getPatients = async () => {
       breed: patient.breed || '',
       owner: patient.owner_name,
       phone: patient.owner_phone,
+      email: patient.owner_email, // Add email field
       status: patient.status,
       photoUrl: patient.photo_url,
       lastUpdate: new Date(patient.updated_at).toLocaleTimeString()
@@ -56,6 +57,7 @@ export const getPatientById = async (id) => {
       breed: data.breed || '',
       owner: data.owner_name,
       phone: data.owner_phone,
+      email: data.owner_email, // Add email field
       status: data.status,
       photoUrl: data.photo_url,
       lastUpdate: new Date(data.updated_at).toLocaleTimeString()
@@ -97,7 +99,7 @@ export const updatePatientStatus = async (id, newStatus) => {
   }
 };
 
-// Add new patient - UPDATED
+// Add new patient - UPDATED to include email
 export const addPatient = async (patientData) => {
   try {
     // Get clinic ID (for now, we'll use the test clinic)
@@ -124,6 +126,7 @@ export const addPatient = async (patientData) => {
       breed: patientData.breed || '',
       owner_name: patientData.owner,
       owner_phone: patientData.phone,
+      owner_email: patientData.email || null, // Add email field
       status: patientData.status || 'Admitted',
       photo_url: photoUrl,
     };
@@ -144,6 +147,7 @@ export const addPatient = async (patientData) => {
       breed: data.breed || '',
       owner: data.owner_name,
       phone: data.owner_phone,
+      email: data.owner_email, // Add email field
       status: data.status,
       photoUrl: data.photo_url,
       lastUpdate: new Date(data.created_at).toLocaleTimeString()
@@ -170,7 +174,7 @@ export const deletePatient = async (id) => {
   }
 };
 
-// Update patient photo - UPDATED
+// Update patient photo
 export const updatePatientPhoto = async (id, photoData) => {
   try {
     // Upload photo to Supabase Storage and get URL
@@ -196,6 +200,7 @@ export const updatePatientPhoto = async (id, photoData) => {
       breed: data.breed || '',
       owner: data.owner_name,
       phone: data.owner_phone,
+      email: data.owner_email, // Add email field
       status: data.status,
       photoUrl: data.photo_url,
       lastUpdate: new Date(data.updated_at).toLocaleTimeString()
@@ -206,23 +211,37 @@ export const updatePatientPhoto = async (id, photoData) => {
   }
 };
 
-// Send update to owner
+// UPDATED: Send update to owner with real SMS/Email integration
 export const sendPatientUpdate = async (updateData) => {
   try {
-    const { data, error } = await supabase
-      .from('patient_updates')
-      .insert({
-        patient_id: updateData.patientId,
-        message_type: updateData.messageType,
-        message_content: updateData.message,
-        send_method: updateData.sendVia,
-        include_photo: updateData.includePhoto,
-      })
-      .select()
-      .single();
+    // Call the Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke('send-patient-update', {
+      body: {
+        patientId: updateData.patientId,
+        messageType: updateData.messageType,
+        message: updateData.message,
+        sendVia: updateData.sendVia,
+        includePhoto: updateData.includePhoto,
+        recipientName: updateData.recipientName,
+        recipientContact: updateData.recipientContact,
+        recipientEmail: updateData.recipientEmail, // Add email support
+      }
+    });
 
-    if (error) throw error;
-    return data;
+    if (error) {
+      console.error('Edge function error:', error);
+      throw new Error(`Failed to send update: ${error.message}`);
+    }
+
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to send update');
+    }
+
+    return {
+      success: true,
+      message: data.message,
+      results: data.results
+    };
   } catch (error) {
     console.error('Error sending update:', error);
     throw error;

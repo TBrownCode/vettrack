@@ -12,6 +12,7 @@ const NewPatientForm = ({ onSave, onCancel }) => {
     breed: '',
     owner: '',
     phone: '',
+    email: '',
     status: 'Admitted',
     photoUrl: null
   });
@@ -66,6 +67,10 @@ const NewPatientForm = ({ onSave, onCancel }) => {
     if (!patient.species.trim()) newErrors.species = 'Species is required';
     if (!patient.owner.trim()) newErrors.owner = 'Owner name is required';
     if (!patient.phone.trim()) newErrors.phone = 'Contact number is required';
+    if (!patient.email.trim()) newErrors.email = 'Email address is required';
+    if (patient.email.trim() && !/\S+@\S+\.\S+/.test(patient.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -222,6 +227,20 @@ const NewPatientForm = ({ onSave, onCancel }) => {
             className={errors.phone ? 'input-error' : ''}
           />
           {errors.phone && <span className="error-message">{errors.phone}</span>}
+        </div>
+        
+        <div className="form-row">
+          <label htmlFor="email">Email Address*</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={patient.email}
+            onChange={handleInputChange}
+            className={errors.email ? 'input-error' : ''}
+            placeholder="owner@example.com"
+          />
+          {errors.email && <span className="error-message">{errors.email}</span>}
         </div>
         
         <div className="form-row">

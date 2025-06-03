@@ -1,4 +1,4 @@
-// src/components/SendUpdateForm.js
+// src/components/SendUpdateForm.js - Updated with email support
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPaperPlane, faImage } from '@fortawesome/free-solid-svg-icons';
@@ -46,9 +46,26 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
     return templateText;
   };
   
+  // Check if we can send via the selected method
+  const canSendViaMethod = (method) => {
+    if (method === 'sms' || method === 'both') {
+      if (!patient.phone) return false;
+    }
+    if (method === 'email' || method === 'both') {
+      if (!patient.email) return false;
+    }
+    return true;
+  };
+  
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate that we have the necessary contact info
+    if (!canSendViaMethod(sendMethod)) {
+      alert(`Cannot send via ${sendMethod}. Missing ${sendMethod === 'sms' ? 'phone number' : sendMethod === 'email' ? 'email address' : 'phone number or email address'}.`);
+      return;
+    }
     
     try {
       setSending(true);
@@ -63,23 +80,19 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
         timestamp: new Date().toISOString(),
         recipientName: patient.owner,
         recipientContact: patient.phone,
-        // Include other relevant fields
+        recipientEmail: patient.email, // Include email
       };
-      
-      // In a real app, this would send the actual message
-      // For now, we'll simulate a network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Call the onSend callback with the update data
       if (onSend) {
-        onSend(updateData);
+        await onSend(updateData);
       }
       
       // Close the form
       onClose();
     } catch (error) {
       console.error('Error sending update:', error);
-      alert('Failed to send update. Please try again.');
+      alert('Failed to send update: ' + (error.message || 'Unknown error'));
       setSending(false);
     }
   };
@@ -105,6 +118,8 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
             <h4>{patient.name}</h4>
             <p>{patient.species} • {patient.breed}</p>
             <p className="owner-info">Owner: {patient.owner}</p>
+            <p className="contact-info">📱 {patient.phone || 'No phone'}</p>
+            <p className="contact-info">📧 {patient.email || 'No email'}</p>
             <p className="current-status">Status: {patient.status}</p>
           </div>
         </div>
@@ -152,8 +167,11 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
                 value="sms"
                 checked={sendMethod === 'sms'}
                 onChange={() => setSendMethod('sms')}
+                disabled={!patient.phone}
               />
-              <span>SMS</span>
+              <span style={{ opacity: !patient.phone ? 0.5 : 1 }}>
+                SMS {!patient.phone && '(No phone)'}
+              </span>
             </label>
             <label className="method-option">
               <input
@@ -162,8 +180,11 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
                 value="email"
                 checked={sendMethod === 'email'}
                 onChange={() => setSendMethod('email')}
+                disabled={!patient.email}
               />
-              <span>Email</span>
+              <span style={{ opacity: !patient.email ? 0.5 : 1 }}>
+                Email {!patient.email && '(No email)'}
+              </span>
             </label>
             <label className="method-option">
               <input
@@ -172,8 +193,11 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
                 value="both"
                 checked={sendMethod === 'both'}
                 onChange={() => setSendMethod('both')}
+                disabled={!patient.phone || !patient.email}
               />
-              <span>Both</span>
+              <span style={{ opacity: (!patient.phone || !patient.email) ? 0.5 : 1 }}>
+                Both {(!patient.phone || !patient.email) && '(Missing contact info)'}
+              </span>
             </label>
           </div>
         </div>
@@ -211,9 +235,9 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
           <button 
             type="submit" 
             className="send-button"
-            disabled={sending}
+            disabled={sending || !canSendViaMethod(sendMethod)}
           >
-            {sending ? 'Sending...' : 'Send Update'}
+            {sending ? 'Sending...' : `Send Update via ${sendMethod.toUpperCase()}`}
             <FontAwesomeIcon icon={faPaperPlane} />
           </button>
         </div>
