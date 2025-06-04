@@ -1,4 +1,4 @@
-// src/services/patientService.js - Updated with real SMS/Email integration
+// src/services/patientService.js - Complete file with all functions
 import { supabase } from '../lib/supabase';
 import { uploadPhotoFromDataURL } from './photoService';
 
@@ -23,7 +23,7 @@ export const getPatients = async () => {
       breed: patient.breed || '',
       owner: patient.owner_name,
       phone: patient.owner_phone,
-      email: patient.owner_email, // Add email field
+      email: patient.owner_email,
       status: patient.status,
       photoUrl: patient.photo_url,
       lastUpdate: new Date(patient.updated_at).toLocaleTimeString()
@@ -57,7 +57,7 @@ export const getPatientById = async (id) => {
       breed: data.breed || '',
       owner: data.owner_name,
       phone: data.owner_phone,
-      email: data.owner_email, // Add email field
+      email: data.owner_email,
       status: data.status,
       photoUrl: data.photo_url,
       lastUpdate: new Date(data.updated_at).toLocaleTimeString()
@@ -68,9 +68,67 @@ export const getPatientById = async (id) => {
   }
 };
 
-// Update patient status
+// Get patient status history
+export const getPatientStatusHistory = async (patientId) => {
+  try {
+    const { data, error } = await supabase
+      .from('status_history')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('changed_at', { ascending: false }); // Most recent first
+
+    if (error) throw error;
+
+    // Transform to match timeline format
+    return data.map(entry => ({
+      id: entry.id,
+      title: entry.new_status,
+      description: getStatusDescription(entry.new_status),
+      timestamp: new Date(entry.changed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date: new Date(entry.changed_at).toLocaleDateString(),
+      status: 'completed', // Will be marked as current in the component
+      hasPhoto: entry.new_status !== 'Admitted', // Photos for all except admission
+      hasEducationalContent: true,
+      changedBy: entry.changed_by
+    }));
+  } catch (error) {
+    console.error('Error fetching status history:', error);
+    throw error;
+  }
+};
+
+// Helper function to get status descriptions
+const getStatusDescription = (status) => {
+  const descriptions = {
+    'Admitted': 'Your pet has arrived and is being settled in',
+    'Being Examined': 'Initial examination and assessment',
+    'Awaiting Tests': 'Waiting for diagnostic tests or results',
+    'Test Results Pending': 'Tests completed, waiting for results',
+    'Being Prepped for Surgery': 'Preparing for the surgical procedure',
+    'In Surgery': 'Surgical procedure in progress',
+    'In Recovery': 'Surgery complete, recovering comfortably',
+    'Awake & Responsive': 'Alert and responding well to treatment',
+    'Ready for Discharge': 'All set to go home!',
+    'Discharged': 'Successfully discharged and on the way home'
+  };
+  return descriptions[status] || 'Status updated';
+};
+
+// Update patient status with history tracking
 export const updatePatientStatus = async (id, newStatus) => {
   try {
+    // First, get the current status
+    const { data: currentPatient, error: fetchError } = await supabase
+      .from('patients')
+      .select('status')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const oldStatus = currentPatient.status;
+
+    // Update the patient status
     const { data, error } = await supabase
       .from('patients')
       .update({ 
@@ -83,14 +141,20 @@ export const updatePatientStatus = async (id, newStatus) => {
 
     if (error) throw error;
 
-    // Also log the status change
-    await supabase
+    // Save the status change to history
+    const { error: historyError } = await supabase
       .from('status_history')
       .insert({
         patient_id: id,
+        old_status: oldStatus,
         new_status: newStatus,
-        changed_by: 'Staff User', // We'll improve this with auth later
+        changed_by: 'Staff User' // TODO: Replace with actual user when auth is implemented
       });
+
+    if (historyError) {
+      console.error('Error saving status history:', historyError);
+      // Don't throw here - the status update succeeded, just log the history error
+    }
 
     return data;
   } catch (error) {
@@ -99,7 +163,7 @@ export const updatePatientStatus = async (id, newStatus) => {
   }
 };
 
-// Add new patient - UPDATED to include email
+// Add new patient with initial status history
 export const addPatient = async (patientData) => {
   try {
     // Get clinic ID (for now, we'll use the test clinic)
@@ -126,7 +190,7 @@ export const addPatient = async (patientData) => {
       breed: patientData.breed || '',
       owner_name: patientData.owner,
       owner_phone: patientData.phone,
-      owner_email: patientData.email || null, // Add email field
+      owner_email: patientData.email || null,
       status: patientData.status || 'Admitted',
       photo_url: photoUrl,
     };
@@ -139,6 +203,21 @@ export const addPatient = async (patientData) => {
 
     if (error) throw error;
 
+    // Create initial status history entry
+    const { error: historyError } = await supabase
+      .from('status_history')
+      .insert({
+        patient_id: data.id,
+        old_status: null, // No previous status
+        new_status: data.status,
+        changed_by: 'Staff User'
+      });
+
+    if (historyError) {
+      console.error('Error creating initial status history:', historyError);
+      // Don't throw here - patient was created successfully
+    }
+
     // Transform back to your format
     return {
       id: data.id,
@@ -147,7 +226,7 @@ export const addPatient = async (patientData) => {
       breed: data.breed || '',
       owner: data.owner_name,
       phone: data.owner_phone,
-      email: data.owner_email, // Add email field
+      email: data.owner_email,
       status: data.status,
       photoUrl: data.photo_url,
       lastUpdate: new Date(data.created_at).toLocaleTimeString()
@@ -200,7 +279,7 @@ export const updatePatientPhoto = async (id, photoData) => {
       breed: data.breed || '',
       owner: data.owner_name,
       phone: data.owner_phone,
-      email: data.owner_email, // Add email field
+      email: data.owner_email,
       status: data.status,
       photoUrl: data.photo_url,
       lastUpdate: new Date(data.updated_at).toLocaleTimeString()
@@ -211,7 +290,7 @@ export const updatePatientPhoto = async (id, photoData) => {
   }
 };
 
-// UPDATED: Send update to owner with real SMS/Email integration
+// Send update to owner with real SMS/Email integration
 export const sendPatientUpdate = async (updateData) => {
   try {
     // Call the Supabase Edge Function
@@ -224,7 +303,7 @@ export const sendPatientUpdate = async (updateData) => {
         includePhoto: updateData.includePhoto,
         recipientName: updateData.recipientName,
         recipientContact: updateData.recipientContact,
-        recipientEmail: updateData.recipientEmail, // Add email support
+        recipientEmail: updateData.recipientEmail,
       }
     });
 
@@ -244,6 +323,108 @@ export const sendPatientUpdate = async (updateData) => {
     };
   } catch (error) {
     console.error('Error sending update:', error);
+    throw error;
+  }
+};
+
+// Delete the most recent status update and revert to previous status
+export const deleteLastStatusUpdate = async (patientId) => {
+  try {
+    // Get all status history for this patient, ordered by most recent first
+    const { data: statusHistory, error: fetchError } = await supabase
+      .from('status_history')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('changed_at', { ascending: false });
+
+    if (fetchError) throw fetchError;
+
+    // Check if there's more than one status entry
+    if (!statusHistory || statusHistory.length <= 1) {
+      throw new Error('Cannot delete the only status entry. Use "Clear Status History" to reset to Admitted.');
+    }
+
+    // Get the most recent entry (to delete) and the previous entry (to revert to)
+    const mostRecentEntry = statusHistory[0];
+    const previousEntry = statusHistory[1];
+
+    // Delete the most recent status history entry
+    const { error: deleteError } = await supabase
+      .from('status_history')
+      .delete()
+      .eq('id', mostRecentEntry.id);
+
+    if (deleteError) throw deleteError;
+
+    // Update patient status to the previous status
+    const { data, error: updateError } = await supabase
+      .from('patients')
+      .update({ 
+        status: previousEntry.new_status,
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', patientId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    return {
+      success: true,
+      message: `Reverted from "${mostRecentEntry.new_status}" back to "${previousEntry.new_status}"`,
+      revertedFrom: mostRecentEntry.new_status,
+      revertedTo: previousEntry.new_status
+    };
+  } catch (error) {
+    console.error('Error deleting last status update:', error);
+    throw error;
+  }
+};
+
+// Clear patient status history and reset to Admitted
+export const clearPatientStatusHistory = async (patientId) => {
+  try {
+    // Delete all status history for this patient
+    const { error: deleteError } = await supabase
+      .from('status_history')
+      .delete()
+      .eq('patient_id', patientId);
+
+    if (deleteError) throw deleteError;
+
+    // Reset patient status to "Admitted"
+    const { data, error: updateError } = await supabase
+      .from('patients')
+      .update({ 
+        status: 'Admitted',
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', patientId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Create new initial status history entry
+    const { error: historyError } = await supabase
+      .from('status_history')
+      .insert({
+        patient_id: patientId,
+        old_status: null,
+        new_status: 'Admitted',
+        changed_by: 'Staff User (Reset)'
+      });
+
+    if (historyError) {
+      console.error('Error creating new status history:', historyError);
+    }
+
+    return {
+      success: true,
+      message: 'Status history cleared and patient reset to Admitted'
+    };
+  } catch (error) {
+    console.error('Error clearing status history:', error);
     throw error;
   }
 };

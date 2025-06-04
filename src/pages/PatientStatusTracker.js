@@ -1,22 +1,118 @@
-// src/pages/PatientStatusTracker.js
+// src/pages/PatientStatusTracker.js - Updated with Real History Loading
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faSpinner, faPaw } from '@fortawesome/free-solid-svg-icons';
-import { getPatientById } from '../services/patientService';
+import { 
+  faArrowLeft, 
+  faSpinner, 
+  faPaw, 
+  faCheck, 
+  faClock, 
+  faHourglassHalf,
+  faCamera,
+  faFileAlt,
+  faVideo,
+  faHeart
+} from '@fortawesome/free-solid-svg-icons';
+import { getPatientById, getPatientStatusHistory } from '../services/patientService';
 import '../styles/PatientStatusTracker.css';
+
+// Define the complete patient journey with icons and descriptions
+const PATIENT_JOURNEY = [
+  {
+    id: 'admitted',
+    title: 'Admitted',
+    description: 'Your pet has arrived and is being settled in',
+    icon: faHeart,
+    color: '#1a73e8'
+  },
+  {
+    id: 'being-examined',
+    title: 'Being Examined',
+    description: 'Initial examination and assessment',
+    icon: faHeart,
+    color: '#ea4335'
+  },
+  {
+    id: 'awaiting-tests',
+    title: 'Awaiting Tests',
+    description: 'Waiting for diagnostic tests or results',
+    icon: faHourglassHalf,
+    color: '#f9ab00'
+  },
+  {
+    id: 'test-results-pending',
+    title: 'Test Results Pending',
+    description: 'Tests completed, waiting for results',
+    icon: faHourglassHalf,
+    color: '#f9ab00'
+  },
+  {
+    id: 'being-prepped-for-surgery',
+    title: 'Being Prepped for Surgery',
+    description: 'Preparing for the surgical procedure',
+    icon: faHeart,
+    color: '#fa903e'
+  },
+  {
+    id: 'in-surgery',
+    title: 'In Surgery',
+    description: 'Surgical procedure in progress',
+    icon: faHeart,
+    color: '#fa903e'
+  },
+  {
+    id: 'in-recovery',
+    title: 'In Recovery',
+    description: 'Surgery complete, recovering comfortably',
+    icon: faHeart,
+    color: '#1e8e3e'
+  },
+  {
+    id: 'awake-responsive',
+    title: 'Awake & Responsive',
+    description: 'Alert and responding well to treatment',
+    icon: faHeart,
+    color: '#1e8e3e'
+  },
+  {
+    id: 'ready-for-discharge',
+    title: 'Ready for Discharge',
+    description: 'All set to go home!',
+    icon: faHeart,
+    color: '#a142f4'
+  },
+  {
+    id: 'discharged',
+    title: 'Discharged',
+    description: 'Successfully discharged and on the way home',
+    icon: faCheck,
+    color: '#1e8e3e'
+  }
+];
 
 const PatientStatusTracker = () => {
   const { id } = useParams();
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [statusHistory, setStatusHistory] = useState([]);
   
   useEffect(() => {
     const loadPatient = async () => {
       try {
         const patientData = await getPatientById(id);
         setPatient(patientData);
+        
+        // Load real status history from database
+        const history = await getPatientStatusHistory(id);
+        
+        // Mark the most recent entry as current
+        if (history.length > 0) {
+          history[0].status = 'current';
+        }
+        
+        setStatusHistory(history);
       } catch (error) {
         console.error('Error loading patient:', error);
         setError('Could not find pet information. Please check the link or contact the clinic.');
@@ -27,21 +123,19 @@ const PatientStatusTracker = () => {
 
     loadPatient();
     
-    // Set up auto-refresh every minute to show real-time updates
+    // Set up auto-refresh every minute
     const refreshInterval = setInterval(() => {
       loadPatient();
-    }, 60000); // 1 minute refresh
+    }, 60000);
     
     return () => clearInterval(refreshInterval);
   }, [id]);
   
-  // Helper function to get status style class
-  const getStatusStyle = (status) => {
-    if (status.includes('Surgery')) return 'status-surgery';
-    if (status.includes('Recovery')) return 'status-recovery';
-    if (status === 'Admitted') return 'status-admitted';
-    if (status.includes('Discharge')) return 'status-discharge';
-    return 'status-default';
+  // Get the current step info
+  const getCurrentStepInfo = () => {
+    return PATIENT_JOURNEY.find(
+      step => step.title.toLowerCase() === patient?.status.toLowerCase()
+    ) || PATIENT_JOURNEY[0];
   };
   
   if (loading) {
@@ -68,12 +162,15 @@ const PatientStatusTracker = () => {
     );
   }
   
+  const currentStep = getCurrentStepInfo();
+  
   return (
     <div className="status-tracker-container">
       <header className="tracker-header">
         <h1><FontAwesomeIcon icon={faPaw} /> VetTrack</h1>
       </header>
       
+      {/* Pet Info Card */}
       <div className="pet-status-card">
         <div className="pet-photo">
           <img 
@@ -85,39 +182,95 @@ const PatientStatusTracker = () => {
         <h2 className="pet-name">{patient.name}</h2>
         <p className="pet-info">{patient.species} • {patient.breed}</p>
         
-        <div className="status-display">
-          <h3>Current Status</h3>
-          <div className={`status-badge-large ${getStatusStyle(patient.status)}`}>
+        {/* Current Status */}
+        <div className="current-status-section">
+          <div className="status-badge-large" style={{ backgroundColor: currentStep.color + '20', color: currentStep.color }}>
+            <FontAwesomeIcon icon={currentStep.icon} />
             {patient.status}
           </div>
+          <p className="status-description">{currentStep.description}</p>
           <p className="status-time">Last Updated: {patient.lastUpdate}</p>
         </div>
+      </div>
+      
+      {/* Timeline Section */}
+      <div className="timeline-section">
+        <h3 className="timeline-title">
+          <FontAwesomeIcon icon={faClock} />
+          {patient.name}'s Journey
+        </h3>
         
-        <div className="status-message">
-          {patient.status === 'In Surgery' && (
-            <p>Your pet is currently in surgery. We'll update this status when they're moved to recovery.</p>
-          )}
-          {patient.status === 'In Recovery' && (
-            <p>Your pet's surgery is complete and they're now in recovery. The vet will contact you soon.</p>
-          )}
-          {patient.status === 'Ready for Discharge' && (
-            <p>Great news! Your pet is ready to go home. Please contact us to arrange pickup.</p>
-          )}
-          {patient.status === 'Admitted' && (
-            <p>Your pet has been admitted and is being cared for by our team.</p>
-          )}
-          {/* Add more conditional messages based on status */}
+        <div className="timeline-container">
+          {statusHistory.map((update, index) => {
+            // Get the appropriate icon and color for each status
+            const stepInfo = PATIENT_JOURNEY.find(
+              step => step.title.toLowerCase() === update.title.toLowerCase()
+            ) || PATIENT_JOURNEY[0];
+            
+            return (
+              <div key={update.id} className={`timeline-item ${update.status}`}>
+                <div className="timeline-marker">
+                  <FontAwesomeIcon 
+                    icon={update.status === 'current' ? faClock : faCheck} 
+                    style={{ color: stepInfo.color }}
+                  />
+                </div>
+                
+                <div className="timeline-content">
+                  <div className="timeline-header">
+                    <h4 className="timeline-title-text">{update.title}</h4>
+                    <span className="timeline-time">{update.timestamp}</span>
+                  </div>
+                  
+                  <p className="timeline-description">{update.description}</p>
+                  
+                  {/* Media and Content */}
+                  <div className="timeline-media">
+                    {update.hasPhoto && (
+                      <button className="media-button photo-button">
+                        <FontAwesomeIcon icon={faCamera} />
+                        View Photo
+                      </button>
+                    )}
+                    
+                    {update.hasEducationalContent && (
+                      <div className="educational-links">
+                        <button className="media-button educational-button">
+                          <FontAwesomeIcon icon={faFileAlt} />
+                          Learn More
+                        </button>
+                        <button className="media-button video-button">
+                          <FontAwesomeIcon icon={faVideo} />
+                          Watch Video
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {update.status === 'current' && (
+                    <div className="current-indicator">
+                      <FontAwesomeIcon icon={faClock} />
+                      Currently here
+                    </div>
+                  )}
+                </div>
+                
+                {index < statusHistory.length - 1 && <div className="timeline-line"></div>}
+              </div>
+            );
+          })}
         </div>
-        
-        <div className="clinic-info">
-          <p>If you have any questions, please contact us at:</p>
-          <p className="contact">Phone: (555) 123-4567</p>
-          <p className="contact">Email: info@vetclinic.com</p>
-        </div>
-        
-        <div className="refresh-note">
-          <p>This page automatically refreshes to show the latest information.</p>
-        </div>
+      </div>
+      
+      {/* Clinic Info */}
+      <div className="clinic-info">
+        <p>If you have any questions, please contact us at:</p>
+        <p className="contact">Phone: (555) 123-4567</p>
+        <p className="contact">Email: info@vetclinic.com</p>
+      </div>
+      
+      <div className="refresh-note">
+        <p>This page automatically refreshes to show the latest information.</p>
       </div>
       
       <footer className="tracker-footer">

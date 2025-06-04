@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate } from '../services/patientService';
+import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash, faHistory, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate } from '../services/patientService';
 import '../styles/PatientDetail.css';
 import CameraCapture from '../components/CameraCapture';
 import { updatePatientPhoto } from '../services/patientService';
 import SimpleCameraCapture from '../components/SimpleCameraCapture';
 import QRCodeGenerator from '../components/QRCodeGenerator';
-import SendUpdateForm from '../components/SendUpdateForm'; // Add this import
-import UpdateConfirmation from '../components/UpdateConfirmation'; // Add this import
+import SendUpdateForm from '../components/SendUpdateForm';
+import UpdateConfirmation from '../components/UpdateConfirmation';
 
 const statusOptions = [
   'Admitted',
@@ -32,8 +32,8 @@ const PatientDetail = () => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
-  const [showSendUpdate, setShowSendUpdate] = useState(false); // Add this state
-  const [showConfirmation, setShowConfirmation] = useState(false); // Add this state
+  const [showSendUpdate, setShowSendUpdate] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -73,7 +73,6 @@ const PatientDetail = () => {
 
   const handleCapturePhoto = async (photoData) => {
     console.log("Photo captured! Data length:", photoData?.length || 0);
-    // Add a simple validation check for the image data
     if (!photoData || photoData.length < 1000) {
       console.error("Invalid photo data received");
       alert("Photo couldn't be captured. Please try again.");
@@ -81,12 +80,9 @@ const PatientDetail = () => {
     }
     
     try {
-      // Show some kind of loading indicator
       setLoading(true);
-      
       const updatedPatient = await updatePatientPhoto(id, photoData);
       console.log("Patient photo updated successfully");
-      
       setPatient(updatedPatient);
       setShowCamera(false);
     } catch (error) {
@@ -102,16 +98,12 @@ const PatientDetail = () => {
   };
 
   const handleSendUpdate = () => {
-    // Open the send update form instead of showing an alert
     setShowSendUpdate(true);
   };
 
   const handleUpdateSent = async (updateData) => {
     try {
-      // Send the update
       await sendPatientUpdate(updateData);
-      
-      // Show confirmation
       setShowConfirmation(true);
     } catch (error) {
       console.error('Error sending update:', error);
@@ -119,16 +111,56 @@ const PatientDetail = () => {
     }
   };
 
-  // Add this delete handler function
   const handleDeletePatient = async () => {
     if (window.confirm(`Are you sure you want to delete ${patient.name}?`)) {
       try {
         await deletePatient(id);
-        // Navigate back to the home page
         navigate('/');
       } catch (error) {
         console.error('Error deleting patient:', error);
         alert('Failed to delete patient');
+      }
+    }
+  };
+
+  // NEW: Handle delete last status update
+  const handleDeleteLastStatus = async () => {
+    if (window.confirm(`Are you sure you want to undo the last status update for ${patient.name}? This will revert to the previous status.`)) {
+      try {
+        setLoading(true);
+        const result = await deleteLastStatusUpdate(id);
+        
+        // Refresh patient data
+        const updatedPatient = await getPatientById(id);
+        setPatient(updatedPatient);
+        
+        alert(`Success! ${result.message}`);
+      } catch (error) {
+        console.error('Error deleting last status update:', error);
+        alert('Failed to delete last status update: ' + (error.message || 'Unknown error'));
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // NEW: Handle clear status history
+  const handleClearStatusHistory = async () => {
+    if (window.confirm(`Are you sure you want to clear ${patient.name}'s status history? This will reset them back to "Admitted" status and cannot be undone.`)) {
+      try {
+        setLoading(true);
+        await clearPatientStatusHistory(id);
+        
+        // Refresh patient data
+        const updatedPatient = await getPatientById(id);
+        setPatient(updatedPatient);
+        
+        alert('Status history cleared successfully. Patient has been reset to "Admitted" status.');
+      } catch (error) {
+        console.error('Error clearing status history:', error);
+        alert('Failed to clear status history: ' + (error.message || 'Unknown error'));
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -221,6 +253,22 @@ const PatientDetail = () => {
         </button>
         
         <button 
+          className="action-button secondary"
+          onClick={handleDeleteLastStatus}
+        >
+          <FontAwesomeIcon icon={faUndo} />
+          Undo Last Status
+        </button>
+        
+        <button 
+          className="action-button secondary"
+          onClick={handleClearStatusHistory}
+        >
+          <FontAwesomeIcon icon={faHistory} />
+          Clear Status History
+        </button>
+        
+        <button 
           className="action-button danger"
           onClick={handleDeletePatient}
         >
@@ -243,7 +291,6 @@ const PatientDetail = () => {
         />
       )}
       
-      {/* Add these new conditional renders */}
       {showSendUpdate && (
         <SendUpdateForm
           patient={patient}
