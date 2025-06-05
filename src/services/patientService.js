@@ -1,4 +1,4 @@
-// src/services/patientService.js - Complete file with all functions
+// src/services/patientService.js - Complete file with all functions including status photos
 import { supabase } from '../lib/supabase';
 import { uploadPhotoFromDataURL } from './photoService';
 
@@ -68,14 +68,21 @@ export const getPatientById = async (id) => {
   }
 };
 
-// Get patient status history
+// Get patient status history with photos
 export const getPatientStatusHistory = async (patientId) => {
   try {
     const { data, error } = await supabase
       .from('status_history')
-      .select('*')
+      .select(`
+        *,
+        status_photos (
+          id,
+          photo_url,
+          created_at
+        )
+      `)
       .eq('patient_id', patientId)
-      .order('changed_at', { ascending: false }); // Most recent first
+      .order('changed_at', { ascending: false });
 
     if (error) throw error;
 
@@ -86,8 +93,9 @@ export const getPatientStatusHistory = async (patientId) => {
       description: getStatusDescription(entry.new_status),
       timestamp: new Date(entry.changed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       date: new Date(entry.changed_at).toLocaleDateString(),
-      status: 'completed', // Will be marked as current in the component
-      hasPhoto: entry.new_status !== 'Admitted', // Photos for all except admission
+      status: 'completed',
+      hasPhoto: entry.status_photos && entry.status_photos.length > 0,
+      photos: entry.status_photos || [], // Include photos in the timeline
       hasEducationalContent: true,
       changedBy: entry.changed_by
     }));
@@ -148,17 +156,106 @@ export const updatePatientStatus = async (id, newStatus) => {
         patient_id: id,
         old_status: oldStatus,
         new_status: newStatus,
-        changed_by: 'Staff User' // TODO: Replace with actual user when auth is implemented
+        changed_by: 'Staff User'
       });
 
     if (historyError) {
       console.error('Error saving status history:', historyError);
-      // Don't throw here - the status update succeeded, just log the history error
     }
 
     return data;
   } catch (error) {
     console.error('Error updating patient status:', error);
+    throw error;
+  }
+};
+
+// NEW: Add photo to a specific status
+export const addStatusPhoto = async (patientId, status, photoData) => {
+  try {
+    // Upload photo to storage
+    const photoUrl = await uploadPhotoFromDataURL(photoData, `${patientId}-${status}-${Date.now()}`);
+
+    // Find the most recent status history entry for this status
+    const { data: statusEntry, error: fetchError } = await supabase
+      .from('status_history')
+      .select('id')
+      .eq('patient_id', patientId)
+      .eq('new_status', status)
+      .order('changed_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (fetchError) {
+      console.error('Error finding status entry:', fetchError);
+      throw new Error('Could not find status entry to attach photo to');
+    }
+
+    // Add photo to status_photos table
+    const { data, error } = await supabase
+      .from('status_photos')
+      .insert({
+        status_history_id: statusEntry.id,
+        patient_id: patientId,
+        status: status,
+        photo_url: photoUrl,
+        added_by: 'Staff User'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      photoUrl: photoUrl,
+      message: `Photo added to "${status}" status successfully`
+    };
+  } catch (error) {
+    console.error('Error adding status photo:', error);
+    throw error;
+  }
+};
+
+// NEW: Delete all photos from a specific status
+export const deleteStatusPhotos = async (patientId, status) => {
+  try {
+    // Get all photos for this patient's current status
+    const { data: photos, error: fetchError } = await supabase
+      .from('status_photos')
+      .select('id, photo_url')
+      .eq('patient_id', patientId)
+      .eq('status', status);
+
+    if (fetchError) throw fetchError;
+
+    if (!photos || photos.length === 0) {
+      return {
+        success: true,
+        message: `No photos found for status "${status}"`
+      };
+    }
+
+    // Delete photos from storage (optional - you might want to keep them for backup)
+    // Note: You would need to extract the file path from the URL and delete from storage
+    // For now, we'll just delete the database records
+
+    // Delete all photo records from the database
+    const { error: deleteError } = await supabase
+      .from('status_photos')
+      .delete()
+      .eq('patient_id', patientId)
+      .eq('status', status);
+
+    if (deleteError) throw deleteError;
+
+    return {
+      success: true,
+      message: `Deleted ${photos.length} photo(s) from "${status}" status`,
+      deletedCount: photos.length
+    };
+  } catch (error) {
+    console.error('Error deleting status photos:', error);
     throw error;
   }
 };
@@ -208,14 +305,13 @@ export const addPatient = async (patientData) => {
       .from('status_history')
       .insert({
         patient_id: data.id,
-        old_status: null, // No previous status
+        old_status: null,
         new_status: data.status,
         changed_by: 'Staff User'
       });
 
     if (historyError) {
       console.error('Error creating initial status history:', historyError);
-      // Don't throw here - patient was created successfully
     }
 
     // Transform back to your format

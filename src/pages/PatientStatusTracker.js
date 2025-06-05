@@ -1,4 +1,4 @@
-// src/pages/PatientStatusTracker.js - Updated with Real History Loading
+// src/pages/PatientStatusTracker.js - Complete file with photo display functionality
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,7 +12,9 @@ import {
   faCamera,
   faFileAlt,
   faVideo,
-  faHeart
+  faHeart,
+  faExpand,
+  faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, getPatientStatusHistory } from '../services/patientService';
 import '../styles/PatientStatusTracker.css';
@@ -97,6 +99,7 @@ const PatientStatusTracker = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusHistory, setStatusHistory] = useState([]);
+  const [selectedPhoto, setSelectedPhoto] = useState(null); // For photo modal
   
   useEffect(() => {
     const loadPatient = async () => {
@@ -136,6 +139,16 @@ const PatientStatusTracker = () => {
     return PATIENT_JOURNEY.find(
       step => step.title.toLowerCase() === patient?.status.toLowerCase()
     ) || PATIENT_JOURNEY[0];
+  };
+
+  // Handle photo click to open modal
+  const handlePhotoClick = (photoUrl) => {
+    setSelectedPhoto(photoUrl);
+  };
+
+  // Close photo modal
+  const closePhotoModal = () => {
+    setSelectedPhoto(null);
   };
   
   if (loading) {
@@ -224,12 +237,36 @@ const PatientStatusTracker = () => {
                   
                   <p className="timeline-description">{update.description}</p>
                   
+                  {/* Status Photos */}
+                  {update.photos && update.photos.length > 0 && (
+                    <div className="status-photos">
+                      {update.photos.map((photo, photoIndex) => (
+                        <div 
+                          key={photo.id}
+                          className="status-photo-thumbnail"
+                          onClick={() => handlePhotoClick(photo.photo_url)}
+                        >
+                          <img 
+                            src={photo.photo_url} 
+                            alt={`${update.title} photo ${photoIndex + 1}`}
+                          />
+                          <div className="photo-overlay">
+                            <FontAwesomeIcon icon={faExpand} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
                   {/* Media and Content */}
                   <div className="timeline-media">
-                    {update.hasPhoto && (
-                      <button className="media-button photo-button">
+                    {update.hasPhoto && update.photos && update.photos.length > 0 && (
+                      <button 
+                        className="media-button photo-button"
+                        onClick={() => handlePhotoClick(update.photos[0].photo_url)}
+                      >
                         <FontAwesomeIcon icon={faCamera} />
-                        View Photo
+                        View Photo ({update.photos.length})
                       </button>
                     )}
                     
@@ -272,6 +309,18 @@ const PatientStatusTracker = () => {
       <div className="refresh-note">
         <p>This page automatically refreshes to show the latest information.</p>
       </div>
+      
+      {/* Photo Modal */}
+      {selectedPhoto && (
+        <div className="photo-modal" onClick={closePhotoModal}>
+          <div className="photo-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="photo-modal-close" onClick={closePhotoModal}>
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+            <img src={selectedPhoto} alt="Status update photo" />
+          </div>
+        </div>
+      )}
       
       <footer className="tracker-footer">
         <p>&copy; 2025 VetTrack • Pet Status Tracking System</p>
