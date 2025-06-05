@@ -1,4 +1,20 @@
-/* src/styles/PatientDetail.css - Complete file with all changes */
+/* Add to your App.css file */
+.header-logo-link {
+  color: white;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.header-logo-link:hover {
+  opacity: 0.8;
+  text-decoration: none;
+  color: white;
+}
+
+.header-logo-link h1 {
+  margin: 0;
+  cursor: pointer;
+}/* src/styles/PatientDetail.css - Complete file with all changes */
 .patient-detail-container {
     padding: 16px;
     padding-bottom: 80px;
@@ -224,6 +240,91 @@
 
   .action-button.danger:hover {
     background-color: #d32f2f;
+  }
+
+  /* NEW: Photo Modal Styles */
+  .photo-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .photo-modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .photo-modal-image {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .photo-modal-close {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: white;
+    color: #333;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1001;
+  }
+
+  .photo-modal-close:hover {
+    background-color: #f5f5f5;
+  }
+
+  .photo-modal-caption {
+    margin-top: 16px;
+    text-align: center;
+    color: white;
+  }
+
+  .photo-modal-caption h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .photo-modal-caption p {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.8;
   }
 
   /* Mobile responsive adjustments */

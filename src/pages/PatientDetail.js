@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash, faHistory, faUndo, faPlus, faImages, faExternalLinkAlt, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash, faHistory, faUndo, faPlus, faImages, faExternalLinkAlt, faCopy, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
 import '../styles/PatientDetail.css';
 import { updatePatientPhoto } from '../services/patientService';
@@ -36,6 +36,7 @@ const PatientDetail = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [cameraMode, setCameraMode] = useState('profile'); // 'profile' or 'status'
   const [error, setError] = useState(null);
+  const [showPhotoModal, setShowPhotoModal] = useState(false); // NEW: for photo modal
 
   useEffect(() => {
     const loadPatient = async () => {
@@ -216,6 +217,20 @@ const PatientDetail = () => {
     }
   };
 
+  // NEW: Handle profile photo click to view large version
+  const handleProfilePhotoClick = (e) => {
+    // Don't open modal if clicking the camera button
+    if (e.target.closest('.photo-overlay-button')) {
+      return;
+    }
+    setShowPhotoModal(true);
+  };
+
+  // NEW: Close photo modal
+  const handleClosePhotoModal = () => {
+    setShowPhotoModal(false);
+  };
+
   if (loading) {
     return <div className="loading-container">Loading patient details...</div>;
   }
@@ -235,7 +250,7 @@ const PatientDetail = () => {
   return (
     <div className="patient-detail-container">
       <div className="patient-header">
-        <div className="patient-avatar-large">
+        <div className="patient-avatar-large" onClick={handleProfilePhotoClick} style={{ cursor: 'pointer' }}>
           <img src={patient.photoUrl || '/images/placeholder-pet.png'} alt={patient.name} />
           {/* New overlay camera button for profile photo */}
           <button 
@@ -388,6 +403,26 @@ const PatientDetail = () => {
         <UpdateConfirmation
           onDismiss={() => setShowConfirmation(false)}
         />
+      )}
+
+      {/* NEW: Photo Modal */}
+      {showPhotoModal && (
+        <div className="photo-modal" onClick={handleClosePhotoModal}>
+          <div className="photo-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="photo-modal-close" onClick={handleClosePhotoModal}>
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+            <img 
+              src={patient.photoUrl || '/images/placeholder-pet.png'} 
+              alt={patient.name}
+              className="photo-modal-image"
+            />
+            <div className="photo-modal-caption">
+              <h3>{patient.name}</h3>
+              <p>{patient.species} • {patient.breed}</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
