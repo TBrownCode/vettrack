@@ -1,4 +1,4 @@
-// src/components/SendUpdateForm.js - Updated with email support
+// src/components/SendUpdateForm.js - Updated with cancel button moved below
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPaperPlane, faImage } from '@fortawesome/free-solid-svg-icons';
@@ -100,7 +100,7 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
   return (
     <div className="send-update-container">
       <div className="update-header">
-        <h3>Send Update to Owner</h3>
+        <h3>Send Message to Owner</h3>
         <button className="close-button" onClick={onClose}>
           <FontAwesomeIcon icon={faTimes} />
         </button>
@@ -225,20 +225,20 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
         
         <div className="form-buttons">
           <button 
+            type="submit" 
+            className="send-button"
+            disabled={sending || !canSendViaMethod(sendMethod)}
+          >
+            {sending ? 'Sending...' : `Send Message via ${sendMethod.toUpperCase()}`}
+            <FontAwesomeIcon icon={faPaperPlane} />
+          </button>
+          <button 
             type="button" 
             className="cancel-button"
             onClick={onClose}
             disabled={sending}
           >
             Cancel
-          </button>
-          <button 
-            type="submit" 
-            className="send-button"
-            disabled={sending || !canSendViaMethod(sendMethod)}
-          >
-            {sending ? 'Sending...' : `Send Update via ${sendMethod.toUpperCase()}`}
-            <FontAwesomeIcon icon={faPaperPlane} />
           </button>
         </div>
       </form>

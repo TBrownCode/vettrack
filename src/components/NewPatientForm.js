@@ -1,4 +1,4 @@
-// src/components/NewPatientForm.js - Updated with UUID generation
+// src/components/NewPatientForm.js - Updated with cancel button moved below
 import React, { useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -259,17 +259,17 @@ const NewPatientForm = ({ onSave, onCancel }) => {
         
         <div className="form-buttons">
           <button 
+            type="submit" 
+            className="save-button"
+          >
+            Save Patient
+          </button>
+          <button 
             type="button" 
             className="cancel-button"
             onClick={onCancel}
           >
             Cancel
-          </button>
-          <button 
-            type="submit" 
-            className="save-button"
-          >
-            Save Patient
           </button>
         </div>
       </form>
