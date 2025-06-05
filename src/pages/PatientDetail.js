@@ -1,6 +1,6 @@
 // src/pages/PatientDetail.js - Complete file with all changes
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash, faHistory, faUndo, faPlus, faImages, faExternalLinkAlt, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
@@ -291,7 +291,7 @@ const PatientDetail = () => {
           onClick={handleSendUpdate}
         >
           <FontAwesomeIcon icon={faPaperPlane} />
-          Send Update to Owner
+          Send Message to Owner
         </button>
         
         {/* Replaced "Take New Photo" with "Add Photo to Current Status" */}
@@ -299,7 +299,7 @@ const PatientDetail = () => {
           className="action-button secondary"
           onClick={() => handleTakePhoto('status')}
         >
-          <FontAwesomeIcon icon={faPlus} />
+          <FontAwesomeIcon icon={faCamera} />
           Add Photo to Current Status
         </button>
         
