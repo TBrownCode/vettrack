@@ -18,37 +18,39 @@
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    overflow: hidden;
     margin-right: 16px;
     flex-shrink: 0;
     background-color: #e0e0e0;
-    position: relative; /* Added for overlay button positioning */
+    position: relative;
+    /* Remove overflow hidden to allow button to show */
   }
   
   .patient-avatar-large img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
   }
 
-  /* New overlay button for profile photo */
+  /* New overlay button for profile photo - back to simple positioning */
   .photo-overlay-button {
     position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 28px;
-    height: 28px;
+    bottom: -6px;
+    right: -6px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background-color: var(--primary-color);
     color: white;
-    border: 2px solid white;
+    border: 3px solid white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     transition: all 0.2s ease;
+    z-index: 10;
   }
 
   .photo-overlay-button:hover {
@@ -232,9 +234,12 @@
     }
 
     .photo-overlay-button {
-      width: 24px;
-      height: 24px;
-      font-size: 0.65rem;
+      width: 28px;
+      height: 28px;
+      font-size: 0.75rem;
+      border-width: 2px;
+      bottom: -5px;
+      right: -5px;
     }
 
     .patient-name-large {
