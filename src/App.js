@@ -1,6 +1,6 @@
-// src/App.js - Updated with Authentication
+// src/App.js - Updated with clickable logo navigation
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -21,7 +21,9 @@ function App() {
             <Route path="/" element={
               <ProtectedRoute>
                 <header className="App-header">
-                  <h1>VetTrack</h1>
+                  <Link to="/" className="header-logo-link">
+                    <h1>VetTrack</h1>
+                  </Link>
                 </header>
                 <main>
                   <Home />
@@ -35,7 +37,9 @@ function App() {
             <Route path="/patient/:id" element={
               <ProtectedRoute>
                 <header className="App-header">
-                  <h1>VetTrack</h1>
+                  <Link to="/" className="header-logo-link">
+                    <h1>VetTrack</h1>
+                  </Link>
                 </header>
                 <main>
                   <PatientDetail />

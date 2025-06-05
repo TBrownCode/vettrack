@@ -36,6 +36,30 @@ body {
   text-align: center;
 }
 
+/* NEW: Clickable logo styles */
+.header-logo-link {
+  color: white;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+  display: inline-block;
+}
+
+.header-logo-link:hover {
+  opacity: 0.8;
+  text-decoration: none;
+  color: white;
+}
+
+.header-logo-link:visited {
+  color: white;
+}
+
+.header-logo-link h1 {
+  margin: 0;
+  cursor: pointer;
+  user-select: none; /* Prevent text selection on click */
+}
+
 main {
   flex: 1;
   padding: 1rem;
