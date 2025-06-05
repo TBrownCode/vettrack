@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash, faHistory, faUndo, faPlus, faImages } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash, faHistory, faUndo, faPlus, faImages, faExternalLinkAlt, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
 import '../styles/PatientDetail.css';
 import { updatePatientPhoto } from '../services/patientService';
@@ -191,6 +191,31 @@ const PatientDetail = () => {
     }
   };
 
+  // NEW: Open status tracker in new tab
+  const handleViewStatusTracker = () => {
+    const statusUrl = `${window.location.origin}/status/${id}`;
+    window.open(statusUrl, '_blank');
+  };
+
+  // NEW: Copy status tracker link
+  const handleCopyStatusLink = async () => {
+    const statusUrl = `${window.location.origin}/status/${id}`;
+    try {
+      await navigator.clipboard.writeText(statusUrl);
+      alert('Status tracking link copied to clipboard! You can share this with the pet owner.');
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = statusUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Status tracking link copied to clipboard!');
+    }
+  };
+
   if (loading) {
     return <div className="loading-container">Loading patient details...</div>;
   }
@@ -284,6 +309,23 @@ const PatientDetail = () => {
         >
           <FontAwesomeIcon icon={faQrcode} />
           View/Print QR Code
+        </button>
+        
+        {/* NEW: Status tracker buttons */}
+        <button 
+          className="action-button secondary"
+          onClick={handleViewStatusTracker}
+        >
+          <FontAwesomeIcon icon={faExternalLinkAlt} />
+          View Status Tracker
+        </button>
+        
+        <button 
+          className="action-button secondary"
+          onClick={handleCopyStatusLink}
+        >
+          <FontAwesomeIcon icon={faCopy} />
+          Copy Owner Link
         </button>
         
         <button 
