@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash, faHistory, faUndo, faPlus, faImages, faExternalLinkAlt, faCopy, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash, faHistory, faUndo, faPlus, faImages, faExternalLinkAlt, faCopy, faTimes, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
 import '../styles/PatientDetail.css';
 import { updatePatientPhoto } from '../services/patientService';
@@ -37,6 +37,7 @@ const PatientDetail = () => {
   const [cameraMode, setCameraMode] = useState('profile'); // 'profile' or 'status'
   const [error, setError] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false); // NEW: for photo modal
+  const [showStatusMenu, setShowStatusMenu] = useState(false); // NEW: for status menu dropdown
 
   useEffect(() => {
     const loadPatient = async () => {
@@ -231,6 +232,23 @@ const PatientDetail = () => {
     setShowPhotoModal(false);
   };
 
+  // NEW: Toggle status menu
+  const handleToggleStatusMenu = () => {
+    setShowStatusMenu(!showStatusMenu);
+  };
+
+  // Close status menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showStatusMenu && !event.target.closest('.status-menu-container')) {
+        setShowStatusMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showStatusMenu]);
+
   if (loading) {
     return <div className="loading-container">Loading patient details...</div>;
   }
@@ -270,7 +288,53 @@ const PatientDetail = () => {
       </div>
 
       <div className="status-section">
-        <h3 className="section-title">Current Status</h3>
+        <div className="status-section-header">
+          <h3 className="section-title">Current Status</h3>
+          <div className="status-menu-container">
+            <button 
+              className="status-menu-button"
+              onClick={handleToggleStatusMenu}
+              aria-label="Status options"
+            >
+              <FontAwesomeIcon icon={faEllipsisV} />
+            </button>
+            
+            {showStatusMenu && (
+              <div className="status-menu-dropdown">
+                <button 
+                  className="status-menu-item"
+                  onClick={() => {
+                    handleDeleteLastStatus();
+                    setShowStatusMenu(false);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faUndo} />
+                  Undo Last Status
+                </button>
+                <button 
+                  className="status-menu-item"
+                  onClick={() => {
+                    handleClearStatusHistory();
+                    setShowStatusMenu(false);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faHistory} />
+                  Clear Status History
+                </button>
+                <button 
+                  className="status-menu-item"
+                  onClick={() => {
+                    handleDeleteStatusPhotos();
+                    setShowStatusMenu(false);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faImages} />
+                  Delete Photos from Current Status
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
         <div className="status-dropdown-container">
           <button 
             className="status-dropdown-button"
@@ -341,31 +405,6 @@ const PatientDetail = () => {
         >
           <FontAwesomeIcon icon={faCopy} />
           Copy Owner Link
-        </button>
-        
-        <button 
-          className="action-button secondary"
-          onClick={handleDeleteLastStatus}
-        >
-          <FontAwesomeIcon icon={faUndo} />
-          Undo Last Status
-        </button>
-        
-        <button 
-          className="action-button secondary"
-          onClick={handleClearStatusHistory}
-        >
-          <FontAwesomeIcon icon={faHistory} />
-          Clear Status History
-        </button>
-        
-        {/* NEW: Delete photos from current status button */}
-        <button 
-          className="action-button secondary"
-          onClick={handleDeleteStatusPhotos}
-        >
-          <FontAwesomeIcon icon={faImages} />
-          Delete Photos from Current Status
         </button>
         
         <button 
