@@ -1,20 +1,4 @@
-/* Add to your App.css file */
-.header-logo-link {
-  color: white;
-  text-decoration: none;
-  transition: opacity 0.2s ease;
-}
-
-.header-logo-link:hover {
-  opacity: 0.8;
-  text-decoration: none;
-  color: white;
-}
-
-.header-logo-link h1 {
-  margin: 0;
-  cursor: pointer;
-}/* src/styles/PatientDetail.css - Complete file with all changes */
+/* src/styles/PatientDetail.css - Complete clean file with custom status styling */
 .patient-detail-container {
     padding: 16px;
     padding-bottom: 80px;
@@ -38,7 +22,6 @@
     flex-shrink: 0;
     background-color: #e0e0e0;
     position: relative;
-    /* Remove overflow hidden to allow button to show */
   }
   
   .patient-avatar-large img {
@@ -48,7 +31,7 @@
     border-radius: 50%;
   }
 
-  /* New overlay button for profile photo - back to simple positioning */
+  /* Photo overlay button for profile photo */
   .photo-overlay-button {
     position: absolute;
     bottom: -6px;
@@ -117,7 +100,7 @@
     color: var(--text-secondary);
   }
 
-  /* NEW: Status menu styles */
+  /* Status menu styles */
   .status-menu-container {
     position: relative;
   }
@@ -130,6 +113,9 @@
     cursor: pointer;
     border-radius: 4px;
     transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .status-menu-button:hover {
@@ -147,6 +133,7 @@
     z-index: 10;
     min-width: 250px;
     margin-top: 4px;
+    overflow: hidden;
   }
 
   .status-menu-item {
@@ -166,16 +153,6 @@
 
   .status-menu-item:hover {
     background-color: #f5f5f5;
-  }
-
-  .status-menu-item:first-child {
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-  }
-
-  .status-menu-item:last-child {
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
   }
 
   .status-menu-item svg {
@@ -209,6 +186,7 @@
     font-weight: 500;
   }
   
+  /* Status color classes */
   .status-admitted { background-color: #e8f0fe; color: #1a73e8; }
   .status-being-examined { background-color: #fce8e6; color: #c5221f; }
   .status-awaiting-tests { background-color: #fef7e0; color: #f9ab00; }
@@ -231,13 +209,15 @@
     border: 1px solid var(--border-color);
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
   }
   
+  /* Enhanced status option styling for custom statuses */
   .status-option {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     width: 100%;
     padding: 12px 16px;
     border: none;
@@ -245,15 +225,33 @@
     text-align: left;
     font-size: 0.875rem;
     cursor: pointer;
+    gap: 4px;
   }
   
   .status-option:hover {
     background-color: #f5f5f5;
   }
   
+  .status-option-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  
+  .status-option-description {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-left: 24px;
+    line-height: 1.3;
+    margin-top: 2px;
+    word-break: break-word;
+  }
+  
   .status-selected-icon {
     color: var(--primary-color);
-    margin-right: 8px;
+    font-size: 0.75rem;
+    margin-right: 4px;
   }
   
   .last-updated {
@@ -316,7 +314,7 @@
     background-color: #d32f2f;
   }
 
-  /* NEW: Photo Modal Styles */
+  /* Photo Modal Styles */
   .photo-modal {
     position: fixed;
     top: 0;
@@ -423,6 +421,28 @@
 
     .patient-species,
     .patient-owner-info {
+      font-size: 0.8rem;
+    }
+
+    .status-options-dropdown {
+      max-height: 300px;
+    }
+    
+    .status-option {
+      padding: 10px 12px;
+    }
+    
+    .status-option-description {
+      margin-left: 20px;
+      font-size: 0.7rem;
+    }
+    
+    .status-menu-dropdown {
+      min-width: 200px;
+    }
+    
+    .status-menu-item {
+      padding: 10px 12px;
       font-size: 0.8rem;
     }
   }

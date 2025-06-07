@@ -1,4 +1,4 @@
-// src/pages/PatientDetail.js - Your existing file with MINIMAL additions
+// src/pages/PatientDetail.js - Complete file with custom status integration
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,60 +17,60 @@ import {
   faCopy, 
   faTimes, 
   faEllipsisV,
-  faCog // ← ADDED: New import for status management
+  faCog
 } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
+import { getAllStatusOptions } from '../services/statusService';
 import '../styles/PatientDetail.css';
 import { updatePatientPhoto } from '../services/patientService';
 import SimpleCameraCapture from '../components/SimpleCameraCapture';
 import QRCodeGenerator from '../components/QRCodeGenerator';
 import SendUpdateForm from '../components/SendUpdateForm';
 import UpdateConfirmation from '../components/UpdateConfirmation';
-import StatusManagement from '../components/StatusManagement'; // ← ADDED: New import
-
-const statusOptions = [
-  'Admitted',
-  'Being Examined',
-  'Awaiting Tests',
-  'Test Results Pending',
-  'Being Prepped for Surgery',
-  'In Surgery',
-  'In Recovery',
-  'Awake & Responsive',
-  'Ready for Discharge',
-  'Discharged'
-];
+import StatusManagement from '../components/StatusManagement';
 
 const PatientDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statusOptions, setStatusOptions] = useState([]);
+  const [statusLoading, setStatusLoading] = useState(true);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [showSendUpdate, setShowSendUpdate] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showStatusManagement, setShowStatusManagement] = useState(false); // ← ADDED: New state
+  const [showStatusManagement, setShowStatusManagement] = useState(false);
   const [cameraMode, setCameraMode] = useState('profile'); // 'profile' or 'status'
   const [error, setError] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   useEffect(() => {
-    const loadPatient = async () => {
+    const loadPatientAndStatuses = async () => {
       try {
-        const patientData = await getPatientById(id);
+        // Load both patient data and status options
+        setLoading(true);
+        setStatusLoading(true);
+        
+        const [patientData, statusOpts] = await Promise.all([
+          getPatientById(id),
+          getAllStatusOptions()
+        ]);
+        
         setPatient(patientData);
+        setStatusOptions(statusOpts);
       } catch (error) {
-        console.error('Error loading patient:', error);
+        console.error('Error loading patient or statuses:', error);
         setError('Could not load patient information');
       } finally {
         setLoading(false);
+        setStatusLoading(false);
       }
     };
 
-    loadPatient();
+    loadPatientAndStatuses();
   }, [id]);
 
   const handleStatusChange = async (newStatus) => {
@@ -247,6 +247,17 @@ const PatientDetail = () => {
     setShowStatusMenu(!showStatusMenu);
   };
 
+  const handleStatusManagementClose = async () => {
+    setShowStatusManagement(false);
+    // Refresh status options after managing them
+    try {
+      const updatedStatusOptions = await getAllStatusOptions();
+      setStatusOptions(updatedStatusOptions);
+    } catch (error) {
+      console.error('Error reloading status options:', error);
+    }
+  };
+
   // Close status menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -259,6 +270,35 @@ const PatientDetail = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showStatusMenu]);
 
+  const getStatusStyle = (status) => {
+    // First try to find in custom statuses
+    const customStatus = statusOptions.find(opt => opt.value === status);
+    if (customStatus) {
+      // Return CSS class name based on color
+      return getColorClass(customStatus.color);
+    }
+    
+    // Fallback to original logic for existing statuses
+    if (status.includes('Surgery')) return 'status-surgery';
+    if (status.includes('Recovery')) return 'status-recovery';
+    if (status === 'Admitted') return 'status-admitted';
+    if (status.includes('Discharge')) return 'status-discharge';
+    return 'status-default';
+  };
+
+  const getColorClass = (color) => {
+    // Map colors to existing CSS classes
+    const colorClassMap = {
+      '#4285f4': 'status-admitted',      // Blue
+      '#34a853': 'status-recovery',      // Green  
+      '#ea4335': 'status-surgery',       // Red
+      '#fbbc05': 'status-awaiting-tests', // Yellow
+      '#fa903e': 'status-surgery',       // Orange
+      '#a142f4': 'status-discharge'      // Purple
+    };
+    return colorClassMap[color] || 'status-default';
+  };
+
   if (loading) {
     return <div className="loading-container">Loading patient details...</div>;
   }
@@ -266,14 +306,6 @@ const PatientDetail = () => {
   if (error || !patient) {
     return <div className="error-container">{error || 'Patient not found'}</div>;
   }
-
-  const getStatusStyle = (status) => {
-    if (status.includes('Surgery')) return 'status-surgery';
-    if (status.includes('Recovery')) return 'status-recovery';
-    if (status === 'Admitted') return 'status-admitted';
-    if (status.includes('Discharge')) return 'status-discharge';
-    return 'status-default';
-  };
 
   return (
     <div className="patient-detail-container">
@@ -357,16 +389,32 @@ const PatientDetail = () => {
           
           {showStatusDropdown && (
             <div className="status-options-dropdown">
-              {statusOptions.map(status => (
-                <button 
-                  key={status} 
-                  className="status-option"
-                  onClick={() => handleStatusChange(status)}
-                >
-                  {status === patient.status && <FontAwesomeIcon icon={faCheck} className="status-selected-icon" />}
-                  {status}
-                </button>
-              ))}
+              {statusLoading ? (
+                <div style={{ padding: '12px', textAlign: 'center', color: '#666' }}>
+                  Loading statuses...
+                </div>
+              ) : (
+                statusOptions.map(status => (
+                  <button 
+                    key={status.value} 
+                    className="status-option"
+                    onClick={() => handleStatusChange(status.value)}
+                  >
+                    <div className="status-option-main">
+                      {status.value === patient.status && (
+                        <FontAwesomeIcon icon={faCheck} className="status-selected-icon" />
+                      )}
+                      <span style={{ color: status.color, marginRight: '8px', fontSize: '16px' }}>●</span>
+                      <span>{status.label}</span>
+                    </div>
+                    {status.description && (
+                      <div className="status-option-description">
+                        {status.description}
+                      </div>
+                    )}
+                  </button>
+                ))
+              )}
             </div>
           )}
         </div>
@@ -414,7 +462,6 @@ const PatientDetail = () => {
           Copy Owner Link
         </button>
         
-        {/* ← ADDED: New Status Management Button */}
         <button 
           className="action-button secondary"
           onClick={() => setShowStatusManagement(true)}
@@ -479,9 +526,8 @@ const PatientDetail = () => {
         </div>
       )}
 
-      {/* ← ADDED: Status Management Modal */}
       {showStatusManagement && (
-        <StatusManagement onClose={() => setShowStatusManagement(false)} />
+        <StatusManagement onClose={handleStatusManagementClose} />
       )}
     </div>
   );
