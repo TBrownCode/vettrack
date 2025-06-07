@@ -1,8 +1,24 @@
-// src/pages/PatientDetail.js - Complete file with all changes
+// src/pages/PatientDetail.js - Your existing file with MINIMAL additions
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faQrcode, faChevronDown, faCheck, faPaperPlane, faTrash, faHistory, faUndo, faPlus, faImages, faExternalLinkAlt, faCopy, faTimes, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faCamera, 
+  faQrcode, 
+  faChevronDown, 
+  faCheck, 
+  faPaperPlane, 
+  faTrash, 
+  faHistory, 
+  faUndo, 
+  faPlus, 
+  faImages, 
+  faExternalLinkAlt, 
+  faCopy, 
+  faTimes, 
+  faEllipsisV,
+  faCog // ← ADDED: New import for status management
+} from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
 import '../styles/PatientDetail.css';
 import { updatePatientPhoto } from '../services/patientService';
@@ -10,6 +26,7 @@ import SimpleCameraCapture from '../components/SimpleCameraCapture';
 import QRCodeGenerator from '../components/QRCodeGenerator';
 import SendUpdateForm from '../components/SendUpdateForm';
 import UpdateConfirmation from '../components/UpdateConfirmation';
+import StatusManagement from '../components/StatusManagement'; // ← ADDED: New import
 
 const statusOptions = [
   'Admitted',
@@ -34,10 +51,11 @@ const PatientDetail = () => {
   const [showCamera, setShowCamera] = useState(false);
   const [showSendUpdate, setShowSendUpdate] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showStatusManagement, setShowStatusManagement] = useState(false); // ← ADDED: New state
   const [cameraMode, setCameraMode] = useState('profile'); // 'profile' or 'status'
   const [error, setError] = useState(null);
-  const [showPhotoModal, setShowPhotoModal] = useState(false); // NEW: for photo modal
-  const [showStatusMenu, setShowStatusMenu] = useState(false); // NEW: for status menu dropdown
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   useEffect(() => {
     const loadPatient = async () => {
@@ -176,7 +194,6 @@ const PatientDetail = () => {
     }
   };
 
-  // NEW: Handle delete photos from current status
   const handleDeleteStatusPhotos = async () => {
     if (window.confirm(`Are you sure you want to delete all photos from ${patient.name}'s current status "${patient.status}"? This cannot be undone.`)) {
       try {
@@ -193,13 +210,11 @@ const PatientDetail = () => {
     }
   };
 
-  // NEW: Open status tracker in new tab
   const handleViewStatusTracker = () => {
     const statusUrl = `${window.location.origin}/status/${id}`;
     window.open(statusUrl, '_blank');
   };
 
-  // NEW: Copy status tracker link
   const handleCopyStatusLink = async () => {
     const statusUrl = `${window.location.origin}/status/${id}`;
     try {
@@ -207,7 +222,6 @@ const PatientDetail = () => {
       alert('Status tracking link copied to clipboard! You can share this with the pet owner.');
     } catch (error) {
       console.error('Failed to copy link:', error);
-      // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = statusUrl;
       document.body.appendChild(textArea);
@@ -218,21 +232,17 @@ const PatientDetail = () => {
     }
   };
 
-  // NEW: Handle profile photo click to view large version
   const handleProfilePhotoClick = (e) => {
-    // Don't open modal if clicking the camera button
     if (e.target.closest('.photo-overlay-button')) {
       return;
     }
     setShowPhotoModal(true);
   };
 
-  // NEW: Close photo modal
   const handleClosePhotoModal = () => {
     setShowPhotoModal(false);
   };
 
-  // NEW: Toggle status menu
   const handleToggleStatusMenu = () => {
     setShowStatusMenu(!showStatusMenu);
   };
@@ -270,7 +280,6 @@ const PatientDetail = () => {
       <div className="patient-header">
         <div className="patient-avatar-large" onClick={handleProfilePhotoClick} style={{ cursor: 'pointer' }}>
           <img src={patient.photoUrl || '/images/placeholder-pet.png'} alt={patient.name} />
-          {/* New overlay camera button for profile photo */}
           <button 
             className="photo-overlay-button"
             onClick={() => handleTakePhoto('profile')}
@@ -373,7 +382,6 @@ const PatientDetail = () => {
           Send Message to Owner
         </button>
         
-        {/* Replaced "Take New Photo" with "Add Photo to Current Status" */}
         <button 
           className="action-button secondary"
           onClick={() => handleTakePhoto('status')}
@@ -390,7 +398,6 @@ const PatientDetail = () => {
           View/Print QR Code
         </button>
         
-        {/* NEW: Status tracker buttons */}
         <button 
           className="action-button secondary"
           onClick={handleViewStatusTracker}
@@ -405,6 +412,15 @@ const PatientDetail = () => {
         >
           <FontAwesomeIcon icon={faCopy} />
           Copy Owner Link
+        </button>
+        
+        {/* ← ADDED: New Status Management Button */}
+        <button 
+          className="action-button secondary"
+          onClick={() => setShowStatusManagement(true)}
+        >
+          <FontAwesomeIcon icon={faCog} />
+          Manage Status Options
         </button>
         
         <button 
@@ -444,7 +460,6 @@ const PatientDetail = () => {
         />
       )}
 
-      {/* NEW: Photo Modal */}
       {showPhotoModal && (
         <div className="photo-modal" onClick={handleClosePhotoModal}>
           <div className="photo-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -462,6 +477,11 @@ const PatientDetail = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ← ADDED: Status Management Modal */}
+      {showStatusManagement && (
+        <StatusManagement onClose={() => setShowStatusManagement(false)} />
       )}
     </div>
   );
