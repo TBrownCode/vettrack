@@ -1,4 +1,4 @@
-// src/components/StatusManagement.js - Complete with edit functionality
+// src/components/StatusManagement.js - Complete with drag & drop reordering
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -9,7 +9,9 @@ import {
   faCircle,
   faEllipsisV,
   faEdit,
-  faSave
+  faSave,
+  faGripVertical,
+  faCheck
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../lib/supabase';
 
@@ -29,6 +31,12 @@ const StatusManagement = ({ onClose }) => {
   });
   const [error, setError] = useState('');
   const [openDropdownId, setOpenDropdownId] = useState(null);
+  
+  // Reordering states
+  const [reorderMode, setReorderMode] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [longPressTimer, setLongPressTimer] = useState(null);
 
   // Color options
   const colorOptions = [
@@ -153,8 +161,9 @@ const StatusManagement = ({ onClose }) => {
   };
 
   const handleEditStatus = (status) => {
-    // Close dropdown
+    // Close dropdown and disable reorder mode
     setOpenDropdownId(null);
+    setReorderMode(false);
     
     // Set up edit form with current status data
     setEditingStatus(status);
@@ -216,8 +225,9 @@ const StatusManagement = ({ onClose }) => {
   };
 
   const handleDeleteStatus = async (statusId, statusName) => {
-    // Close dropdown
+    // Close dropdown and disable reorder mode
     setOpenDropdownId(null);
+    setReorderMode(false);
     
     if (!window.confirm(`Delete "${statusName}"? This cannot be undone.`)) return;
 
@@ -237,7 +247,138 @@ const StatusManagement = ({ onClose }) => {
   };
 
   const toggleDropdown = (statusId) => {
+    if (reorderMode) return; // Don't open dropdown in reorder mode
     setOpenDropdownId(openDropdownId === statusId ? null : statusId);
+  };
+
+  // Long press handlers
+  const handleMouseDown = (index) => {
+    if (editingStatus) return; // Don't allow reordering while editing
+    
+    const timer = setTimeout(() => {
+      setReorderMode(true);
+      setOpenDropdownId(null); // Close any open dropdowns
+    }, 800); // 800ms long press
+    
+    setLongPressTimer(timer);
+  };
+
+  const handleMouseUp = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  // Touch handlers for mobile
+  const handleTouchStart = (index) => {
+    if (editingStatus) return;
+    
+    const timer = setTimeout(() => {
+      setReorderMode(true);
+      setOpenDropdownId(null);
+      // Add haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 800);
+    
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    // Reorder the statuses array
+    const newStatuses = [...statuses];
+    const draggedStatus = newStatuses[draggedIndex];
+    
+    // Remove dragged item
+    newStatuses.splice(draggedIndex, 1);
+    
+    // Insert at new position
+    newStatuses.splice(dropIndex, 0, draggedStatus);
+    
+    setStatuses(newStatuses);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  // Save reorder to database
+  const handleSaveOrder = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      // Update order_index for each status
+      const updatePromises = statuses.map((status, index) => 
+        supabase
+          .from('clinic_statuses')
+          .update({ order_index: index + 1 })
+          .eq('id', status.id)
+      );
+
+      const results = await Promise.all(updatePromises);
+      
+      // Check if any updates failed
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        throw new Error('Failed to update some status orders');
+      }
+
+      setReorderMode(false);
+      alert('Status order saved successfully!');
+    } catch (error) {
+      console.error('Error saving status order:', error);
+      setError('Failed to save status order: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelReorder = () => {
+    setReorderMode(false);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    // Reload statuses to reset order
+    loadStatuses();
   };
 
   return (
@@ -274,16 +415,16 @@ const StatusManagement = ({ onClose }) => {
           justifyContent: 'space-between', 
           alignItems: 'center',
           padding: '20px',
-          backgroundColor: '#4285f4',
+          backgroundColor: reorderMode ? '#28a745' : (editingStatus ? '#ffc107' : '#4285f4'),
           color: 'white',
           borderRadius: '12px 12px 0 0'
         }}>
           <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FontAwesomeIcon icon={faCog} />
-            {editingStatus ? 'Edit Status' : 'Manage Status Options'}
+            <FontAwesomeIcon icon={reorderMode ? faGripVertical : (editingStatus ? faEdit : faCog)} />
+            {reorderMode ? 'Reorder Statuses' : (editingStatus ? 'Edit Status' : 'Manage Status Options')}
           </h3>
           <button 
-            onClick={editingStatus ? handleCancelEdit : onClose}
+            onClick={reorderMode ? handleCancelReorder : (editingStatus ? handleCancelEdit : onClose)}
             style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.25rem', cursor: 'pointer' }}
           >
             <FontAwesomeIcon icon={faTimes} />
@@ -301,6 +442,58 @@ const StatusManagement = ({ onClose }) => {
               border: '1px solid #fab1a0'
             }}>
               {error}
+            </div>
+          )}
+
+          {/* Reorder Instructions */}
+          {reorderMode && (
+            <div style={{
+              backgroundColor: '#d4edda',
+              color: '#155724',
+              padding: '12px',
+              borderRadius: '6px',
+              marginBottom: '20px',
+              border: '1px solid #c3e6cb'
+            }}>
+              <strong>Reorder Mode Active</strong><br />
+              Drag and drop statuses to reorder them. The order here will be the order in dropdown menus.
+            </div>
+          )}
+
+          {/* Reorder Action Buttons */}
+          {reorderMode && (
+            <div style={{ marginBottom: '20px', display: 'flex', gap: '12px' }}>
+              <button
+                onClick={handleSaveOrder}
+                disabled={loading}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <FontAwesomeIcon icon={faCheck} />
+                Save Order
+              </button>
+              <button
+                onClick={handleCancelReorder}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
             </div>
           )}
 
@@ -431,8 +624,8 @@ const StatusManagement = ({ onClose }) => {
             </div>
           )}
 
-          {/* Add New Status - Hide when editing */}
-          {!editingStatus && (
+          {/* Add New Status - Hide when editing or reordering */}
+          {!editingStatus && !reorderMode && (
             <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
               <h4 style={{ margin: '0 0 16px 0' }}>Add New Status</h4>
               <form onSubmit={handleAddStatus}>
@@ -541,7 +734,20 @@ const StatusManagement = ({ onClose }) => {
           {/* Current Statuses - Hide when editing */}
           {!editingStatus && (
             <div>
-              <h4 style={{ margin: '0 0 16px 0' }}>Current Custom Statuses ({statuses.length})</h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h4 style={{ margin: 0 }}>Current Custom Statuses ({statuses.length})</h4>
+                {!reorderMode && statuses.length > 1 && (
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '12px', 
+                    color: '#666',
+                    fontStyle: 'italic'
+                  }}>
+                    Long press to reorder
+                  </p>
+                )}
+              </div>
+              
               {loading ? (
                 <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
                   Loading statuses...
@@ -553,22 +759,56 @@ const StatusManagement = ({ onClose }) => {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {statuses.map(status => (
+                  {statuses.map((status, index) => (
                     <div 
                       key={status.id}
+                      draggable={reorderMode}
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, index)}
+                      onMouseDown={() => handleMouseDown(index)}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseLeave}
+                      onTouchStart={() => handleTouchStart(index)}
+                      onTouchEnd={handleTouchEnd}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '12px',
-                        backgroundColor: 'white',
-                        border: '1px solid #e1e5e9',
+                        backgroundColor: dragOverIndex === index ? '#e3f2fd' : (reorderMode ? '#f8f9fa' : 'white'),
+                        border: reorderMode ? '2px dashed #ccc' : '1px solid #e1e5e9',
                         borderRadius: '6px',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                        position: 'relative'
+                        boxShadow: draggedIndex === index ? '0 4px 12px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.1)',
+                        position: 'relative',
+                        cursor: reorderMode ? 'grab' : 'default',
+                        userSelect: 'none',
+                        opacity: draggedIndex === index ? 0.5 : 1,
+                        transform: draggedIndex === index ? 'rotate(2deg)' : 'none',
+                        transition: reorderMode ? 'none' : 'all 0.2s ease'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      {reorderMode && (
+                        <div style={{
+                          position: 'absolute',
+                          left: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: '#666',
+                          fontSize: '16px'
+                        }}>
+                          <FontAwesomeIcon icon={faGripVertical} />
+                        </div>
+                      )}
+                      
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '12px', 
+                        flex: 1,
+                        marginLeft: reorderMode ? '24px' : '0'
+                      }}>
                         <div 
                           style={{
                             width: '20px',
@@ -600,86 +840,88 @@ const StatusManagement = ({ onClose }) => {
                         </div>
                       </div>
                       
-                      {/* Dropdown Menu */}
-                      <div className="status-dropdown-container" style={{ position: 'relative' }}>
-                        <button
-                          onClick={() => toggleDropdown(status.id)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#666',
-                            cursor: 'pointer',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            fontSize: '16px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                          title="Status options"
-                        >
-                          <FontAwesomeIcon icon={faEllipsisV} />
-                        </button>
-                        
-                        {openDropdownId === status.id && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '100%',
-                            right: 0,
-                            backgroundColor: 'white',
-                            border: '1px solid #e1e5e9',
-                            borderRadius: '6px',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                            zIndex: 10,
-                            minWidth: '120px',
-                            marginTop: '4px',
-                            overflow: 'hidden'
-                          }}>
-                            <button
-                              onClick={() => handleEditStatus(status)}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                width: '100%',
-                                padding: '10px 12px',
-                                border: 'none',
-                                background: 'none',
-                                textAlign: 'left',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                color: '#333'
-                              }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                            >
-                              <FontAwesomeIcon icon={faEdit} style={{ color: '#4285f4' }} />
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteStatus(status.id, status.name)}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                width: '100%',
-                                padding: '10px 12px',
-                                border: 'none',
-                                background: 'none',
-                                textAlign: 'left',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                color: '#d32f2f'
-                              }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                            >
-                              <FontAwesomeIcon icon={faTrash} />
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                      {/* Dropdown Menu - Hide in reorder mode */}
+                      {!reorderMode && (
+                        <div className="status-dropdown-container" style={{ position: 'relative' }}>
+                          <button
+                            onClick={() => toggleDropdown(status.id)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#666',
+                              cursor: 'pointer',
+                              padding: '8px',
+                              borderRadius: '4px',
+                              fontSize: '16px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            title="Status options"
+                          >
+                            <FontAwesomeIcon icon={faEllipsisV} />
+                          </button>
+                          
+                          {openDropdownId === status.id && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '100%',
+                              right: 0,
+                              backgroundColor: 'white',
+                              border: '1px solid #e1e5e9',
+                              borderRadius: '6px',
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                              zIndex: 10,
+                              minWidth: '120px',
+                              marginTop: '4px',
+                              overflow: 'hidden'
+                            }}>
+                              <button
+                                onClick={() => handleEditStatus(status)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  border: 'none',
+                                  background: 'none',
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  color: '#333'
+                                }}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                              >
+                                <FontAwesomeIcon icon={faEdit} style={{ color: '#4285f4' }} />
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteStatus(status.id, status.name)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  border: 'none',
+                                  background: 'none',
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  color: '#d32f2f'
+                                }}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                              >
+                                <FontAwesomeIcon icon={faTrash} />
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -687,8 +929,8 @@ const StatusManagement = ({ onClose }) => {
             </div>
           )}
 
-          {/* Info Footer - Hide when editing */}
-          {!editingStatus && (
+          {/* Info Footer - Hide when editing or reordering */}
+          {!editingStatus && !reorderMode && (
             <div style={{ 
               marginTop: '24px', 
               padding: '12px', 
