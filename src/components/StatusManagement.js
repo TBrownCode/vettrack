@@ -1,4 +1,4 @@
-// src/components/StatusManagement.js - Updated with toast notifications
+// src/components/StatusManagement.js - Updated with active/inactive toggle
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -11,7 +11,9 @@ import {
   faEdit,
   faSave,
   faGripVertical,
-  faCheck
+  faCheck,
+  faEye,
+  faEyeSlash
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/useToast';
@@ -41,7 +43,7 @@ const StatusManagement = ({ onClose }) => {
   const [longPressTimer, setLongPressTimer] = useState(null);
 
   // Toast notifications
-  const { toasts, showSuccess, showError, showWarning, showInfo, hideToast } = useToast();
+  const { toasts, showSuccess, showError, showWarning, hideToast } = useToast();
 
   // Color options
   const colorOptions = [
@@ -97,8 +99,7 @@ const StatusManagement = ({ onClose }) => {
           .from('clinic_statuses')
           .select('*')
           .eq('clinic_id', clinic.id)
-          .eq('is_active', true)
-          .order('order_index', { ascending: true });
+          .order('order_index', { ascending: true }); // Load both active and inactive
 
         if (error) throw error;
         setStatuses(data || []);
@@ -226,6 +227,36 @@ const StatusManagement = ({ onClose }) => {
     setEditingStatus(null);
     setEditForm({ name: '', description: '', color: '#4285f4' });
     setError('');
+  };
+
+  const handleToggleActive = async (statusId, currentActiveState, statusName) => {
+    setOpenDropdownId(null);
+    
+    try {
+      const newActiveState = !currentActiveState;
+      
+      const { error } = await supabase
+        .from('clinic_statuses')
+        .update({ 
+          is_active: newActiveState,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', statusId);
+
+      if (error) throw error;
+
+      setStatuses(prev => prev.map(status => 
+        status.id === statusId 
+          ? { ...status, is_active: newActiveState }
+          : status
+      ));
+
+      const action = newActiveState ? 'activated' : 'deactivated';
+      showSuccess(`Status "${statusName}" ${action} successfully!`);
+    } catch (error) {
+      console.error('Error toggling status active state:', error);
+      showError('Failed to update status');
+    }
   };
 
   const handleDeleteStatus = async (statusId, statusName) => {
@@ -732,16 +763,28 @@ const StatusManagement = ({ onClose }) => {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <h4 style={{ margin: 0 }}>Current Custom Statuses ({statuses.length})</h4>
-                  {!reorderMode && statuses.length > 1 && (
-                    <p style={{ 
-                      margin: 0, 
-                      fontSize: '12px', 
-                      color: '#666',
-                      fontStyle: 'italic'
-                    }}>
-                      Long press to reorder
-                    </p>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34a853' }}></div>
+                        Active
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ccc' }}></div>
+                        Inactive
+                      </span>
+                    </div>
+                    {!reorderMode && statuses.length > 1 && (
+                      <p style={{ 
+                        margin: 0, 
+                        fontSize: '12px', 
+                        color: '#666',
+                        fontStyle: 'italic'
+                      }}>
+                        Long press to reorder
+                      </p>
+                    )}
+                  </div>
                 </div>
                 
                 {loading ? (
@@ -780,7 +823,7 @@ const StatusManagement = ({ onClose }) => {
                           position: 'relative',
                           cursor: reorderMode ? 'grab' : 'default',
                           userSelect: 'none',
-                          opacity: draggedIndex === index ? 0.5 : 1,
+                          opacity: status.is_active ? (draggedIndex === index ? 0.5 : 1) : 0.6,
                           transform: draggedIndex === index ? 'rotate(2deg)' : 'none',
                           transition: reorderMode ? 'none' : 'all 0.2s ease'
                         }}
@@ -805,21 +848,38 @@ const StatusManagement = ({ onClose }) => {
                           flex: 1,
                           marginLeft: reorderMode ? '24px' : '0'
                         }}>
-                          <div 
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              minWidth: '20px',
-                              minHeight: '20px',
-                              borderRadius: '50%',
-                              backgroundColor: status.color,
-                              border: '2px solid white',
-                              boxShadow: '0 0 0 1px rgba(0,0,0,0.1)',
-                              flexShrink: 0
-                            }}
-                          />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div 
+                              style={{
+                                width: '20px',
+                                height: '20px',
+                                minWidth: '20px',
+                                minHeight: '20px',
+                                borderRadius: '50%',
+                                backgroundColor: status.color,
+                                border: '2px solid white',
+                                boxShadow: '0 0 0 1px rgba(0,0,0,0.1)',
+                                flexShrink: 0
+                              }}
+                            />
+                            <div 
+                              style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: status.is_active ? '#34a853' : '#ccc',
+                                flexShrink: 0
+                              }}
+                              title={status.is_active ? 'Active - appears in dropdowns' : 'Inactive - hidden from dropdowns'}
+                            />
+                          </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: '500', fontSize: '16px', wordBreak: 'break-word' }}>
+                            <div style={{ 
+                              fontWeight: '500', 
+                              fontSize: '16px', 
+                              wordBreak: 'break-word',
+                              textDecoration: status.is_active ? 'none' : 'line-through'
+                            }}>
                               {status.name}
                             </div>
                             {status.description && (
@@ -867,10 +927,34 @@ const StatusManagement = ({ onClose }) => {
                                 borderRadius: '6px',
                                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                                 zIndex: 10,
-                                minWidth: '120px',
+                                minWidth: '140px',
                                 marginTop: '4px',
                                 overflow: 'hidden'
                               }}>
+                                <button
+                                  onClick={() => handleToggleActive(status.id, status.is_active, status.name)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    width: '100%',
+                                    padding: '10px 12px',
+                                    border: 'none',
+                                    background: 'none',
+                                    textAlign: 'left',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    color: status.is_active ? '#d32f2f' : '#28a745'
+                                  }}
+                                  onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                                  onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                >
+                                  <FontAwesomeIcon 
+                                    icon={status.is_active ? faEyeSlash : faEye} 
+                                    style={{ color: status.is_active ? '#d32f2f' : '#28a745' }} 
+                                  />
+                                  {status.is_active ? 'Deactivate' : 'Activate'}
+                                </button>
                                 <button
                                   onClick={() => handleEditStatus(status)}
                                   style={{

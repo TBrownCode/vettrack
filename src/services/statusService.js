@@ -1,7 +1,7 @@
-// src/services/statusService.js - Complete file with color override fix
+// src/services/statusService.js - Complete file with active/inactive filter
 import { supabase } from '../lib/supabase';
 
-// Get all available statuses (default + custom) for dropdowns
+// Get all available statuses (default + custom) for dropdowns - ONLY ACTIVE ONES
 export const getAllStatusOptions = async () => {
   try {
     // Default statuses (keep these as fallback)
@@ -31,7 +31,7 @@ export const getAllStatusOptions = async () => {
           .from('clinic_statuses')
           .select('name, color, description')
           .eq('clinic_id', clinic.id)
-          .eq('is_active', true)
+          .eq('is_active', true) // Only active statuses for dropdowns
           .order('order_index', { ascending: true });
 
         if (!error && customStatuses && customStatuses.length > 0) {
