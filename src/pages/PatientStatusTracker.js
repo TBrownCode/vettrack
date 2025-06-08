@@ -1,4 +1,4 @@
-// src/pages/PatientStatusTracker.js - Complete file with photo display functionality
+// src/pages/PatientStatusTracker.js - Complete file with custom status support
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,79 +17,80 @@ import {
   faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, getPatientStatusHistory } from '../services/patientService';
+import { getAllStatusOptions } from '../services/statusService'; // ADDED for custom status support
 import '../styles/PatientStatusTracker.css';
 
-// Define the complete patient journey with icons and descriptions
+// Default patient journey (fallback for when custom statuses aren't loaded)
 const PATIENT_JOURNEY = [
   {
     id: 'admitted',
     title: 'Admitted',
     description: 'Your pet has arrived and is being settled in',
     icon: faHeart,
-    color: '#1a73e8'
+    color: '#4285f4'  // Blue
   },
   {
     id: 'being-examined',
     title: 'Being Examined',
     description: 'Initial examination and assessment',
     icon: faHeart,
-    color: '#ea4335'
+    color: '#ea4335'  // Red - CORRECTED
   },
   {
     id: 'awaiting-tests',
     title: 'Awaiting Tests',
     description: 'Waiting for diagnostic tests or results',
     icon: faHourglassHalf,
-    color: '#f9ab00'
+    color: '#fbbc05'  // Yellow
   },
   {
     id: 'test-results-pending',
     title: 'Test Results Pending',
     description: 'Tests completed, waiting for results',
     icon: faHourglassHalf,
-    color: '#f9ab00'
+    color: '#fbbc05'  // Yellow
   },
   {
     id: 'being-prepped-for-surgery',
     title: 'Being Prepped for Surgery',
     description: 'Preparing for the surgical procedure',
     icon: faHeart,
-    color: '#fa903e'
+    color: '#fa903e'  // Orange
   },
   {
     id: 'in-surgery',
     title: 'In Surgery',
     description: 'Surgical procedure in progress',
     icon: faHeart,
-    color: '#fa903e'
+    color: '#ea4335'  // Red - CORRECTED from orange
   },
   {
     id: 'in-recovery',
     title: 'In Recovery',
     description: 'Surgery complete, recovering comfortably',
     icon: faHeart,
-    color: '#1e8e3e'
+    color: '#34a853'  // Green
   },
   {
     id: 'awake-responsive',
     title: 'Awake & Responsive',
     description: 'Alert and responding well to treatment',
     icon: faHeart,
-    color: '#1e8e3e'
+    color: '#34a853'  // Green
   },
   {
     id: 'ready-for-discharge',
     title: 'Ready for Discharge',
     description: 'All set to go home!',
     icon: faHeart,
-    color: '#a142f4'
+    color: '#a142f4'  // Purple
   },
   {
     id: 'discharged',
     title: 'Discharged',
     description: 'Successfully discharged and on the way home',
     icon: faCheck,
-    color: '#1e8e3e'
+    color: '#a142f4'  // Purple
   }
 ];
 
@@ -99,13 +100,20 @@ const PatientStatusTracker = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusHistory, setStatusHistory] = useState([]);
-  const [selectedPhoto, setSelectedPhoto] = useState(null); // For photo modal
+  const [statusOptions, setStatusOptions] = useState([]); // ADDED for custom status support
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
   
   useEffect(() => {
     const loadPatient = async () => {
       try {
-        const patientData = await getPatientById(id);
+        // Load patient data AND status options for custom status support
+        const [patientData, statusOpts] = await Promise.all([
+          getPatientById(id),
+          getAllStatusOptions()
+        ]);
+        
         setPatient(patientData);
+        setStatusOptions(statusOpts); // Store dynamic status options
         
         // Load real status history from database
         const history = await getPatientStatusHistory(id);
@@ -134,10 +142,62 @@ const PatientStatusTracker = () => {
     return () => clearInterval(refreshInterval);
   }, [id]);
   
-  // Get the current step info
+  // Helper function for default descriptions
+  const getDefaultDescription = (status) => {
+    const descriptions = {
+      'Admitted': 'Your pet has arrived and is being settled in',
+      'Being Examined': 'Initial examination and assessment',
+      'Awaiting Tests': 'Waiting for diagnostic tests or results',
+      'Test Results Pending': 'Tests completed, waiting for results',
+      'Being Prepped for Surgery': 'Preparing for the surgical procedure',
+      'In Surgery': 'Surgical procedure in progress',
+      'In Recovery': 'Surgery complete, recovering comfortably',
+      'Awake & Responsive': 'Alert and responding well to treatment',
+      'Ready for Discharge': 'All set to go home!',
+      'Discharged': 'Successfully discharged and on the way home'
+    };
+    return descriptions[status] || 'Status updated';
+  };
+  
+  // UPDATED: Get current step info with custom status support
   const getCurrentStepInfo = () => {
+    // First try to find in loaded status options (includes custom statuses)
+    const customStatus = statusOptions.find(
+      opt => opt.value.toLowerCase() === patient?.status.toLowerCase()
+    );
+    
+    if (customStatus) {
+      return {
+        title: customStatus.label,
+        description: customStatus.description || getDefaultDescription(customStatus.value),
+        icon: faHeart, // Default icon for custom statuses
+        color: customStatus.color
+      };
+    }
+    
+    // Fallback to default journey
     return PATIENT_JOURNEY.find(
       step => step.title.toLowerCase() === patient?.status.toLowerCase()
+    ) || PATIENT_JOURNEY[0];
+  };
+
+  // UPDATED: Get step info for timeline items with custom status support
+  const getStepInfo = (statusTitle) => {
+    // First try to find in loaded status options (includes custom statuses)
+    const customStatus = statusOptions.find(
+      opt => opt.value.toLowerCase() === statusTitle.toLowerCase()
+    );
+    
+    if (customStatus) {
+      return {
+        color: customStatus.color,
+        icon: faHeart // Default icon for custom statuses
+      };
+    }
+    
+    // Fallback to default journey
+    return PATIENT_JOURNEY.find(
+      step => step.title.toLowerCase() === statusTitle.toLowerCase()
     ) || PATIENT_JOURNEY[0];
   };
 
@@ -215,10 +275,8 @@ const PatientStatusTracker = () => {
         
         <div className="timeline-container">
           {statusHistory.map((update, index) => {
-            // Get the appropriate icon and color for each status
-            const stepInfo = PATIENT_JOURNEY.find(
-              step => step.title.toLowerCase() === update.title.toLowerCase()
-            ) || PATIENT_JOURNEY[0];
+            // UPDATED: Get step info with custom status support
+            const stepInfo = getStepInfo(update.title);
             
             return (
               <div key={update.id} className={`timeline-item ${update.status}`}>

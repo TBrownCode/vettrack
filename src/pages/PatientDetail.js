@@ -1,4 +1,4 @@
-// src/pages/PatientDetail.js - Complete file with custom status color support
+// src/pages/PatientDetail.js - Complete file with status descriptions removed
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -270,7 +270,7 @@ const PatientDetail = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showStatusMenu]);
 
-  // UPDATED: Handle both default and custom status styling
+  // Handle both default and custom status styling
   const getStatusStyle = (status) => {
     // First check if it's a default status
     const defaultStatusCSSMap = {
@@ -295,13 +295,13 @@ const PatientDetail = () => {
     return 'status-custom';
   };
 
-  // NEW: Get current status color from statusOptions
+  // Get current status color from statusOptions
   const getCurrentStatusColor = () => {
     const statusOption = statusOptions.find(opt => opt.value === patient?.status);
     return statusOption ? statusOption.color : '#5f6368';
   };
 
-  // NEW: Convert hex color to background color with opacity
+  // Convert hex color to background color with opacity
   const getCurrentStatusBgColor = () => {
     const color = getCurrentStatusColor();
     // Convert hex to rgba with low opacity for background
@@ -312,7 +312,7 @@ const PatientDetail = () => {
     return `rgba(${r}, ${g}, ${b}, 0.15)`;
   };
 
-  // NEW: Check if current status is custom
+  // Check if current status is custom
   const isCustomStatus = (status) => {
     const defaultStatuses = [
       'Admitted', 'Being Examined', 'Awaiting Tests', 'Test Results Pending',
@@ -404,7 +404,6 @@ const PatientDetail = () => {
             className="status-dropdown-button"
             onClick={() => setShowStatusDropdown(!showStatusDropdown)}
           >
-            {/* UPDATED: Status badge with custom color support */}
             <span 
               className={`status-badge ${getStatusStyle(patient.status)}`}
               style={isCustomStatus(patient.status) ? {
@@ -437,11 +436,7 @@ const PatientDetail = () => {
                       <span style={{ color: status.color, marginRight: '8px', fontSize: '18px' }}>●</span>
                       <span>{status.label}</span>
                     </div>
-                    {status.description && (
-                      <div className="status-option-description">
-                        {status.description}
-                      </div>
-                    )}
+                    {/* REMOVED: Description section completely */}
                   </button>
                 ))
               )}

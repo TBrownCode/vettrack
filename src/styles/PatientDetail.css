@@ -1,4 +1,4 @@
-/* src/styles/PatientDetail.css - Complete file with all status classes, mobile fixes, and custom status support */
+/* src/styles/PatientDetail.css - Complete file with compact status dropdown (no descriptions) */
 .patient-detail-container {
     padding: 16px;
     padding-bottom: 80px;
@@ -237,7 +237,7 @@
     color: #a142f4 !important; 
   }
 
-  /* NEW: Custom status class - uses inline styles for colors */
+  /* Custom status class - uses inline styles for colors */
   .status-custom {
     /* Base styling - colors will be applied via inline styles */
     padding: 6px 14px;
@@ -267,19 +267,18 @@
     overflow-y: auto;
   }
   
-  /* Enhanced status option styling for custom statuses - UPDATED FONT SIZES */
+  /* UPDATED: Compact status option styling (no descriptions) */
   .status-option {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center; /* Changed from flex-direction: column */
     width: 100%;
-    padding: 14px 16px;
+    padding: 12px 16px; /* Reduced from 14px 16px */
     border: none;
     background: none;
     text-align: left;
     font-size: 1rem;
     cursor: pointer;
-    gap: 6px;
+    /* Removed gap since we're not using column layout */
   }
   
   .status-option:hover {
@@ -295,13 +294,9 @@
     font-weight: 500;
   }
   
+  /* Hide descriptions completely */
   .status-option-description {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin-left: 28px;
-    line-height: 1.4;
-    margin-top: 4px;
-    word-break: break-word;
+    display: none !important;
   }
   
   .status-selected-icon {
@@ -461,7 +456,7 @@
     opacity: 0.8;
   }
 
-  /* Mobile responsive adjustments - UPDATED WITH LARGER FONTS */
+  /* Mobile responsive adjustments - UPDATED for compact dropdown */
   @media (max-width: 480px) {
     .patient-avatar-large {
       width: 70px;
@@ -490,20 +485,15 @@
       max-height: 300px;
     }
     
+    /* MORE COMPACT on mobile */
     .status-option {
-      padding: 16px 14px;
+      padding: 10px 14px; /* Even more compact on mobile */
       font-size: 1.1rem;
     }
 
     .status-option-main {
       font-size: 1.1rem;
       gap: 12px;
-    }
-    
-    .status-option-description {
-      margin-left: 30px;
-      font-size: 0.9rem;
-      line-height: 1.5;
     }
     
     .status-menu-dropdown {
