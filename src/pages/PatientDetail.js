@@ -504,15 +504,15 @@ const PatientDetail = () => {
                 color: getCurrentStatusColor()
               } : {}}
             >
-              {/* Add protection indicator */}
+              {patient.status}
+              {/* Add protection indicator close to the end of text */}
               {requiresProtection(patient.status) && (
                 <FontAwesomeIcon 
                   icon={faShieldAlt} 
-                  style={{ marginRight: '6px', fontSize: '0.8em' }}
+                  style={{ marginLeft: '4px', fontSize: '0.8em' }}
                   title={getProtectionDescription(patient.status)}
                 />
               )}
-              {patient.status}
             </span>
             <FontAwesomeIcon icon={faChevronDown} />
           </button>
@@ -536,20 +536,20 @@ const PatientDetail = () => {
                       )}
                       <span style={{ color: status.color, marginRight: '8px', fontSize: '18px' }}>●</span>
                       
-                      {/* Add protection indicator for critical statuses */}
+                      <span>{status.label}</span>
+                      
+                      {/* Add protection indicator close to the end of text */}
                       {requiresProtection(status.value) && (
                         <FontAwesomeIcon 
                           icon={faShieldAlt} 
                           style={{ 
                             color: '#ff9800', 
-                            marginRight: '6px', 
+                            marginLeft: '4px', 
                             fontSize: '12px' 
                           }}
                           title={getProtectionDescription(status.value)}
                         />
                       )}
-                      
-                      <span>{status.label}</span>
                     </div>
                   </button>
                 ))
