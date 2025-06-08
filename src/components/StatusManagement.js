@@ -1,4 +1,4 @@
-// src/components/StatusManagement.js - Updated with confirmation dialog
+// src/components/StatusManagement.js - Complete file with protection level configuration
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -27,13 +27,15 @@ const StatusManagement = ({ onClose }) => {
   const [newStatus, setNewStatus] = useState({
     name: '',
     description: '',
-    color: '#4285f4'
+    color: '#4285f4',
+    protection_level: 'none'
   });
   const [editingStatus, setEditingStatus] = useState(null);
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
-    color: '#4285f4'
+    color: '#4285f4',
+    protection_level: 'none'
   });
   const [error, setError] = useState('');
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -54,6 +56,14 @@ const StatusManagement = ({ onClose }) => {
     handleCancel, 
     confirmDelete 
   } = useConfirmation();
+
+  // Protection level options
+  const protectionLevels = [
+    { value: 'none', label: 'No Protection', description: 'Immediate status change', color: '#6c757d' },
+    { value: 'confirmation', label: 'Confirmation Required', description: 'Single confirmation dialog', color: '#17a2b8' },
+    { value: 'delay', label: 'Delay Protection', description: '5-second delay with cancel option', color: '#ffc107' },
+    { value: 'double-confirm', label: 'Double Confirmation', description: 'Two-step confirmation process', color: '#dc3545' }
+  ];
 
   // Color options
   const colorOptions = [
@@ -151,6 +161,7 @@ const StatusManagement = ({ onClose }) => {
         name: newStatus.name,
         description: newStatus.description,
         color: newStatus.color,
+        protection_level: newStatus.protection_level,
         category: 'general',
         order_index: statuses.length + 1,
         is_active: true
@@ -165,7 +176,7 @@ const StatusManagement = ({ onClose }) => {
       if (error) throw error;
 
       setStatuses(prev => [...prev, data]);
-      setNewStatus({ name: '', description: '', color: '#4285f4' });
+      setNewStatus({ name: '', description: '', color: '#4285f4', protection_level: 'none' });
       showSuccess(`Status "${newStatus.name}" added successfully!`);
     } catch (error) {
       console.error('Error adding status:', error);
@@ -184,7 +195,8 @@ const StatusManagement = ({ onClose }) => {
     setEditForm({
       name: status.name,
       description: status.description || '',
-      color: status.color
+      color: status.color,
+      protection_level: status.protection_level || 'none'
     });
   };
 
@@ -207,6 +219,7 @@ const StatusManagement = ({ onClose }) => {
           name: editForm.name,
           description: editForm.description,
           color: editForm.color,
+          protection_level: editForm.protection_level,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingStatus.id)
@@ -221,7 +234,7 @@ const StatusManagement = ({ onClose }) => {
 
       const oldName = editingStatus.name;
       setEditingStatus(null);
-      setEditForm({ name: '', description: '', color: '#4285f4' });
+      setEditForm({ name: '', description: '', color: '#4285f4', protection_level: 'none' });
       
       showSuccess(`Status "${oldName}" updated successfully!`);
     } catch (error) {
@@ -235,7 +248,7 @@ const StatusManagement = ({ onClose }) => {
 
   const handleCancelEdit = () => {
     setEditingStatus(null);
-    setEditForm({ name: '', description: '', color: '#4285f4' });
+    setEditForm({ name: '', description: '', color: '#4285f4', protection_level: 'none' });
     setError('');
   };
 
@@ -301,7 +314,7 @@ const StatusManagement = ({ onClose }) => {
     setOpenDropdownId(openDropdownId === statusId ? null : statusId);
   };
 
-  // Long press handlers for reordering (keeping existing logic)
+  // Long press handlers for reordering
   const handleMouseDown = (index) => {
     if (editingStatus) return;
     
@@ -348,7 +361,7 @@ const StatusManagement = ({ onClose }) => {
     }
   };
 
-  // Drag and drop handlers (keeping existing logic)
+  // Drag and drop handlers
   const handleDragStart = (e, index) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
@@ -626,6 +639,60 @@ const StatusManagement = ({ onClose }) => {
                     </div>
                   </div>
 
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
+                      Protection Level
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {protectionLevels.map(level => (
+                        <label
+                          key={level.value}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '12px',
+                            border: editForm.protection_level === level.value ? `2px solid ${level.color}` : '1px solid #e1e5e9',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            backgroundColor: editForm.protection_level === level.value ? `${level.color}10` : 'white',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="editProtectionLevel"
+                            value={level.value}
+                            checked={editForm.protection_level === level.value}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, protection_level: e.target.value }))}
+                            style={{ marginRight: '12px' }}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ 
+                              fontWeight: '500', 
+                              color: editForm.protection_level === level.value ? level.color : '#333',
+                              marginBottom: '2px'
+                            }}>
+                              {level.label}
+                            </div>
+                            <div style={{ 
+                              fontSize: '0.8rem', 
+                              color: '#666',
+                              lineHeight: '1.3'
+                            }}>
+                              {level.description}
+                            </div>
+                          </div>
+                          {editForm.protection_level === level.value && (
+                            <FontAwesomeIcon 
+                              icon={faCheck} 
+                              style={{ color: level.color, marginLeft: '8px' }}
+                            />
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <button 
                       type="submit" 
@@ -746,6 +813,60 @@ const StatusManagement = ({ onClose }) => {
                         >
                           {newStatus.color === color && <FontAwesomeIcon icon={faCircle} style={{ fontSize: '10px' }} />}
                         </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
+                      Protection Level
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {protectionLevels.map(level => (
+                        <label
+                          key={level.value}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '12px',
+                            border: newStatus.protection_level === level.value ? `2px solid ${level.color}` : '1px solid #e1e5e9',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            backgroundColor: newStatus.protection_level === level.value ? `${level.color}10` : 'white',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="newProtectionLevel"
+                            value={level.value}
+                            checked={newStatus.protection_level === level.value}
+                            onChange={(e) => setNewStatus(prev => ({ ...prev, protection_level: e.target.value }))}
+                            style={{ marginRight: '12px' }}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ 
+                              fontWeight: '500', 
+                              color: newStatus.protection_level === level.value ? level.color : '#333',
+                              marginBottom: '2px'
+                            }}>
+                              {level.label}
+                            </div>
+                            <div style={{ 
+                              fontSize: '0.8rem', 
+                              color: '#666',
+                              lineHeight: '1.3'
+                            }}>
+                              {level.description}
+                            </div>
+                          </div>
+                          {newStatus.protection_level === level.value && (
+                            <FontAwesomeIcon 
+                              icon={faCheck} 
+                              style={{ color: level.color, marginLeft: '8px' }}
+                            />
+                          )}
+                        </label>
                       ))}
                     </div>
                   </div>
@@ -882,9 +1003,29 @@ const StatusManagement = ({ onClose }) => {
                               fontWeight: '500', 
                               fontSize: '16px', 
                               wordBreak: 'break-word',
-                              textDecoration: status.is_active ? 'none' : 'line-through'
+                              textDecoration: status.is_active ? 'none' : 'line-through',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
                             }}>
-                              {status.name}
+                              <span>{status.name}</span>
+                              {/* Protection level indicator */}
+                              {status.protection_level && status.protection_level !== 'none' && (
+                                <span style={{
+                                  fontSize: '10px',
+                                  padding: '2px 6px',
+                                  borderRadius: '10px',
+                                  backgroundColor: protectionLevels.find(p => p.value === status.protection_level)?.color || '#6c757d',
+                                  color: 'white',
+                                  fontWeight: '600',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}>
+                                  {status.protection_level === 'double-confirm' ? 'CRITICAL' :
+                                   status.protection_level === 'delay' ? 'DELAY' :
+                                   status.protection_level === 'confirmation' ? 'CONFIRM' : 'PROTECTED'}
+                                </span>
+                              )}
                             </div>
                             {status.description && (
                               <div style={{ 
@@ -895,6 +1036,17 @@ const StatusManagement = ({ onClose }) => {
                                 lineHeight: '1.4'
                               }}>
                                 {status.description}
+                              </div>
+                            )}
+                            {/* Protection level description */}
+                            {status.protection_level && status.protection_level !== 'none' && (
+                              <div style={{ 
+                                fontSize: '12px', 
+                                color: protectionLevels.find(p => p.value === status.protection_level)?.color || '#6c757d',
+                                marginTop: '4px',
+                                fontStyle: 'italic'
+                              }}>
+                                {protectionLevels.find(p => p.value === status.protection_level)?.description}
                               </div>
                             )}
                           </div>

@@ -1,4 +1,4 @@
-// src/components/ConfirmationDialog.js
+// src/components/ConfirmationDialog.js - Complete confirmation dialog component
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 

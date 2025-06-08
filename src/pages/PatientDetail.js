@@ -1,6 +1,6 @@
-// src/pages/PatientDetail.js - Complete file with status descriptions removed
+// src/pages/PatientDetail.js - Complete file with status protection system
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faCamera, 
@@ -17,10 +17,13 @@ import {
   faCopy, 
   faTimes, 
   faEllipsisV,
-  faCog
+  faCog,
+  faShieldAlt // New icon for protected statuses
 } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
 import { getAllStatusOptions } from '../services/statusService';
+import { useStatusProtection } from '../hooks/useStatusProtection'; // Import the new hook
+import StatusProtectionDialog from '../components/StatusProtectionDialog'; // Import the new component
 import '../styles/PatientDetail.css';
 import { updatePatientPhoto } from '../services/patientService';
 import SimpleCameraCapture from '../components/SimpleCameraCapture';
@@ -42,15 +45,24 @@ const PatientDetail = () => {
   const [showSendUpdate, setShowSendUpdate] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showStatusManagement, setShowStatusManagement] = useState(false);
-  const [cameraMode, setCameraMode] = useState('profile'); // 'profile' or 'status'
+  const [cameraMode, setCameraMode] = useState('profile');
   const [error, setError] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
+  // Add status protection hook
+  const {
+    protection,
+    requiresProtectionSync,
+    changeStatusWithProtection,
+    handleConfirm,
+    handleCancel,
+    getProtectionDescriptionSync
+  } = useStatusProtection();
+
   useEffect(() => {
     const loadPatientAndStatuses = async () => {
       try {
-        // Load both patient data and status options
         setLoading(true);
         setStatusLoading(true);
         
@@ -73,19 +85,33 @@ const PatientDetail = () => {
     loadPatientAndStatuses();
   }, [id]);
 
+  // Updated handleStatusChange with protection
   const handleStatusChange = async (newStatus) => {
-    try {
-      await updatePatientStatus(id, newStatus);
-      setPatient(prev => ({
-        ...prev,
-        status: newStatus,
-        lastUpdate: new Date().toLocaleTimeString()
-      }));
-      setShowStatusDropdown(false);
-    } catch (error) {
-      console.error('Error updating status:', error);
-      alert('Failed to update status');
-    }
+    const performStatusChange = async () => {
+      try {
+        await updatePatientStatus(id, newStatus);
+        setPatient(prev => ({
+          ...prev,
+          status: newStatus,
+          lastUpdate: new Date().toLocaleTimeString()
+        }));
+        setShowStatusDropdown(false);
+      } catch (error) {
+        console.error('Error updating status:', error);
+        alert('Failed to update status');
+      }
+    };
+
+    // Use protection system for status changes
+    changeStatusWithProtection(
+      newStatus,
+      patient.name,
+      performStatusChange,
+      () => {
+        // On cancel, just close the dropdown
+        setShowStatusDropdown(false);
+      }
+    );
   };
 
   // Updated to handle both profile and status photos
@@ -106,12 +132,10 @@ const PatientDetail = () => {
       setLoading(true);
       
       if (cameraMode === 'profile') {
-        // Update the main patient photo
         const updatedPatient = await updatePatientPhoto(id, photoData);
         console.log("Patient profile photo updated successfully");
         setPatient(updatedPatient);
       } else if (cameraMode === 'status') {
-        // Add photo to current status
         await addStatusPhoto(id, patient.status, photoData);
         console.log("Status photo added successfully");
         alert(`Photo added to "${patient.status}" status successfully!`);
@@ -411,6 +435,14 @@ const PatientDetail = () => {
                 color: getCurrentStatusColor()
               } : {}}
             >
+              {/* Add protection indicator */}
+              {requiresProtectionSync(patient.status, statusOptions) && (
+                <FontAwesomeIcon 
+                  icon={faShieldAlt} 
+                  style={{ marginRight: '6px', fontSize: '0.8em' }}
+                  title={getProtectionDescriptionSync(patient.status, statusOptions)}
+                />
+              )}
               {patient.status}
             </span>
             <FontAwesomeIcon icon={faChevronDown} />
@@ -434,9 +466,22 @@ const PatientDetail = () => {
                         <FontAwesomeIcon icon={faCheck} className="status-selected-icon" />
                       )}
                       <span style={{ color: status.color, marginRight: '8px', fontSize: '18px' }}>●</span>
+                      
+                      {/* Add protection indicator for critical statuses */}
+                      {requiresProtectionSync(status.value, statusOptions) && (
+                        <FontAwesomeIcon 
+                          icon={faShieldAlt} 
+                          style={{ 
+                            color: '#ff9800', 
+                            marginRight: '6px', 
+                            fontSize: '12px' 
+                          }}
+                          title={getProtectionDescriptionSync(status.value, statusOptions)}
+                        />
+                      )}
+                      
                       <span>{status.label}</span>
                     </div>
-                    {/* REMOVED: Description section completely */}
                   </button>
                 ))
               )}
@@ -503,6 +548,16 @@ const PatientDetail = () => {
           Delete Patient
         </button>
       </div>
+      
+      {/* Add the Status Protection Dialog */}
+      <StatusProtectionDialog
+        isOpen={protection.isOpen}
+        status={protection.status}
+        patientName={protection.patientName}
+        protectionType={protection.protectionType}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
       
       {showCamera && (
         <SimpleCameraCapture
