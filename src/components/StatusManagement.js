@@ -1,4 +1,4 @@
-// src/components/StatusManagement.js - Fixed dropdown z-index for inactive statuses
+// src/components/StatusManagement.js - Updated with confirmation dialog
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -17,7 +17,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/useToast';
+import { useConfirmation } from '../hooks/useConfirmation';
 import { ToastContainer } from './Toast';
+import ConfirmationDialog from './ConfirmationDialog';
 
 const StatusManagement = ({ onClose }) => {
   const [statuses, setStatuses] = useState([]);
@@ -44,6 +46,14 @@ const StatusManagement = ({ onClose }) => {
 
   // Toast notifications
   const { toasts, showSuccess, showError, showWarning, hideToast } = useToast();
+  
+  // Confirmation dialog
+  const { 
+    confirmation, 
+    handleConfirm, 
+    handleCancel, 
+    confirmDelete 
+  } = useConfirmation();
 
   // Color options
   const colorOptions = [
@@ -99,7 +109,7 @@ const StatusManagement = ({ onClose }) => {
           .from('clinic_statuses')
           .select('*')
           .eq('clinic_id', clinic.id)
-          .order('order_index', { ascending: true }); // Load both active and inactive
+          .order('order_index', { ascending: true });
 
         if (error) throw error;
         setStatuses(data || []);
@@ -259,26 +269,31 @@ const StatusManagement = ({ onClose }) => {
     }
   };
 
-  const handleDeleteStatus = async (statusId, statusName) => {
+  const handleDeleteStatus = (statusId, statusName) => {
     setOpenDropdownId(null);
     setReorderMode(false);
     
-    if (!window.confirm(`Delete "${statusName}"? This cannot be undone.`)) return;
+    // Use the confirmation dialog instead of window.confirm
+    confirmDelete(
+      'Delete Status',
+      `Delete "${statusName}"? This cannot be undone.`,
+      async () => {
+        try {
+          const { error } = await supabase
+            .from('clinic_statuses')
+            .delete()
+            .eq('id', statusId);
 
-    try {
-      const { error } = await supabase
-        .from('clinic_statuses')
-        .delete()
-        .eq('id', statusId);
-
-      if (error) throw error;
-      setStatuses(prev => prev.filter(status => status.id !== statusId));
-      showSuccess(`Status "${statusName}" deleted successfully!`);
-    } catch (error) {
-      console.error('Error deleting status:', error);
-      setError('Failed to delete status: ' + error.message);
-      showError('Failed to delete status');
-    }
+          if (error) throw error;
+          setStatuses(prev => prev.filter(status => status.id !== statusId));
+          showSuccess(`Status "${statusName}" deleted successfully!`);
+        } catch (error) {
+          console.error('Error deleting status:', error);
+          setError('Failed to delete status: ' + error.message);
+          showError('Failed to delete status');
+        }
+      }
+    );
   };
 
   const toggleDropdown = (statusId) => {
@@ -286,7 +301,7 @@ const StatusManagement = ({ onClose }) => {
     setOpenDropdownId(openDropdownId === statusId ? null : statusId);
   };
 
-  // Long press handlers
+  // Long press handlers for reordering (keeping existing logic)
   const handleMouseDown = (index) => {
     if (editingStatus) return;
     
@@ -333,7 +348,7 @@ const StatusManagement = ({ onClose }) => {
     }
   };
 
-  // Drag and drop handlers
+  // Drag and drop handlers (keeping existing logic)
   const handleDragStart = (e, index) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
@@ -826,7 +841,6 @@ const StatusManagement = ({ onClose }) => {
                           opacity: status.is_active ? (draggedIndex === index ? 0.5 : 1) : 0.6,
                           transform: draggedIndex === index ? 'rotate(2deg)' : 'none',
                           transition: reorderMode ? 'none' : 'all 0.2s ease',
-                          // FIXED: Higher z-index for inactive status items when dropdown is open
                           zIndex: (openDropdownId === status.id) ? 15 : 1
                         }}
                       >
@@ -930,7 +944,7 @@ const StatusManagement = ({ onClose }) => {
                                   border: '1px solid #e1e5e9',
                                   borderRadius: '6px',
                                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                  zIndex: 20, // FIXED: Higher z-index for dropdown menu
+                                  zIndex: 20,
                                   minWidth: '140px',
                                   marginTop: '4px',
                                   overflow: 'hidden'
@@ -1029,6 +1043,18 @@ const StatusManagement = ({ onClose }) => {
           </div>
         </div>
       </div>
+      
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmation.isOpen}
+        title={confirmation.title}
+        message={confirmation.message}
+        confirmText={confirmation.confirmText}
+        cancelText={confirmation.cancelText}
+        type={confirmation.type}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
       
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onHideToast={hideToast} />
