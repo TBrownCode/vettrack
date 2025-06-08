@@ -1,4 +1,4 @@
-// src/components/StatusManagement.js - Updated with active/inactive toggle
+// src/components/StatusManagement.js - Fixed dropdown z-index for inactive statuses
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -825,7 +825,9 @@ const StatusManagement = ({ onClose }) => {
                           userSelect: 'none',
                           opacity: status.is_active ? (draggedIndex === index ? 0.5 : 1) : 0.6,
                           transform: draggedIndex === index ? 'rotate(2deg)' : 'none',
-                          transition: reorderMode ? 'none' : 'all 0.2s ease'
+                          transition: reorderMode ? 'none' : 'all 0.2s ease',
+                          // FIXED: Higher z-index for inactive status items when dropdown is open
+                          zIndex: (openDropdownId === status.id) ? 15 : 1
                         }}
                       >
                         {reorderMode && (
@@ -926,7 +928,7 @@ const StatusManagement = ({ onClose }) => {
                                 border: '1px solid #e1e5e9',
                                 borderRadius: '6px',
                                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                zIndex: 10,
+                                zIndex: 20, // FIXED: Higher z-index for dropdown menu
                                 minWidth: '140px',
                                 marginTop: '4px',
                                 overflow: 'hidden'
