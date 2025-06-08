@@ -1,4 +1,4 @@
-// src/pages/PatientDetail.js - Complete file with custom status integration
+// src/pages/PatientDetail.js - Complete file with custom status color support
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -270,33 +270,56 @@ const PatientDetail = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showStatusMenu]);
 
+  // UPDATED: Handle both default and custom status styling
   const getStatusStyle = (status) => {
-    // First try to find in custom statuses
-    const customStatus = statusOptions.find(opt => opt.value === status);
-    if (customStatus) {
-      // Return CSS class name based on color
-      return getColorClass(customStatus.color);
+    // First check if it's a default status
+    const defaultStatusCSSMap = {
+      'Admitted': 'status-admitted',
+      'Being Examined': 'status-being-examined',
+      'Awaiting Tests': 'status-awaiting-tests', 
+      'Test Results Pending': 'status-test-results-pending',
+      'Being Prepped for Surgery': 'status-being-prepped-for-surgery',
+      'In Surgery': 'status-in-surgery',
+      'In Recovery': 'status-in-recovery',
+      'Awake & Responsive': 'status-awake-responsive', 
+      'Ready for Discharge': 'status-ready-for-discharge',
+      'Discharged': 'status-discharged'
+    };
+    
+    // If it's a default status, use the predefined CSS class
+    if (defaultStatusCSSMap[status]) {
+      return defaultStatusCSSMap[status];
     }
     
-    // Fallback to original logic for existing statuses
-    if (status.includes('Surgery')) return 'status-surgery';
-    if (status.includes('Recovery')) return 'status-recovery';
-    if (status === 'Admitted') return 'status-admitted';
-    if (status.includes('Discharge')) return 'status-discharge';
-    return 'status-default';
+    // For custom statuses, return a special class name
+    return 'status-custom';
   };
 
-  const getColorClass = (color) => {
-    // Map colors to existing CSS classes
-    const colorClassMap = {
-      '#4285f4': 'status-admitted',      // Blue
-      '#34a853': 'status-recovery',      // Green  
-      '#ea4335': 'status-surgery',       // Red
-      '#fbbc05': 'status-awaiting-tests', // Yellow
-      '#fa903e': 'status-surgery',       // Orange
-      '#a142f4': 'status-discharge'      // Purple
-    };
-    return colorClassMap[color] || 'status-default';
+  // NEW: Get current status color from statusOptions
+  const getCurrentStatusColor = () => {
+    const statusOption = statusOptions.find(opt => opt.value === patient?.status);
+    return statusOption ? statusOption.color : '#5f6368';
+  };
+
+  // NEW: Convert hex color to background color with opacity
+  const getCurrentStatusBgColor = () => {
+    const color = getCurrentStatusColor();
+    // Convert hex to rgba with low opacity for background
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return `rgba(${r}, ${g}, ${b}, 0.15)`;
+  };
+
+  // NEW: Check if current status is custom
+  const isCustomStatus = (status) => {
+    const defaultStatuses = [
+      'Admitted', 'Being Examined', 'Awaiting Tests', 'Test Results Pending',
+      'Being Prepped for Surgery', 'In Surgery', 'In Recovery', 'Awake & Responsive',
+      'Ready for Discharge', 'Discharged'
+    ];
+    return !defaultStatuses.includes(status);
   };
 
   if (loading) {
@@ -381,7 +404,14 @@ const PatientDetail = () => {
             className="status-dropdown-button"
             onClick={() => setShowStatusDropdown(!showStatusDropdown)}
           >
-            <span className={`status-badge ${getStatusStyle(patient.status)}`}>
+            {/* UPDATED: Status badge with custom color support */}
+            <span 
+              className={`status-badge ${getStatusStyle(patient.status)}`}
+              style={isCustomStatus(patient.status) ? {
+                backgroundColor: getCurrentStatusBgColor(),
+                color: getCurrentStatusColor()
+              } : {}}
+            >
               {patient.status}
             </span>
             <FontAwesomeIcon icon={faChevronDown} />
@@ -404,7 +434,7 @@ const PatientDetail = () => {
                       {status.value === patient.status && (
                         <FontAwesomeIcon icon={faCheck} className="status-selected-icon" />
                       )}
-                      <span style={{ color: status.color, marginRight: '8px', fontSize: '16px' }}>●</span>
+                      <span style={{ color: status.color, marginRight: '8px', fontSize: '18px' }}>●</span>
                       <span>{status.label}</span>
                     </div>
                     {status.description && (
