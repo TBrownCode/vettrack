@@ -1,4 +1,4 @@
-// src/pages/PatientStatusTracker.js - Complete file with custom status support
+// src/pages/PatientStatusTracker.js - Fixed with custom status descriptions
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,7 +17,7 @@ import {
   faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, getPatientStatusHistory } from '../services/patientService';
-import { getAllStatusOptions } from '../services/statusService'; // ADDED for custom status support
+import { getAllStatusOptions } from '../services/statusService';
 import '../styles/PatientStatusTracker.css';
 
 // Default patient journey (fallback for when custom statuses aren't loaded)
@@ -100,7 +100,7 @@ const PatientStatusTracker = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusHistory, setStatusHistory] = useState([]);
-  const [statusOptions, setStatusOptions] = useState([]); // ADDED for custom status support
+  const [statusOptions, setStatusOptions] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   
   useEffect(() => {
@@ -113,17 +113,23 @@ const PatientStatusTracker = () => {
         ]);
         
         setPatient(patientData);
-        setStatusOptions(statusOpts); // Store dynamic status options
+        setStatusOptions(statusOpts);
         
         // Load real status history from database
         const history = await getPatientStatusHistory(id);
         
+        // FIXED: Update descriptions with custom status descriptions
+        const updatedHistory = history.map(entry => ({
+          ...entry,
+          description: getStatusDescription(entry.title, statusOpts)
+        }));
+        
         // Mark the most recent entry as current
-        if (history.length > 0) {
-          history[0].status = 'current';
+        if (updatedHistory.length > 0) {
+          updatedHistory[0].status = 'current';
         }
         
-        setStatusHistory(history);
+        setStatusHistory(updatedHistory);
       } catch (error) {
         console.error('Error loading patient:', error);
         setError('Could not find pet information. Please check the link or contact the clinic.');
@@ -142,8 +148,18 @@ const PatientStatusTracker = () => {
     return () => clearInterval(refreshInterval);
   }, [id]);
   
-  // Helper function for default descriptions
-  const getDefaultDescription = (status) => {
+  // FIXED: Helper function that uses custom status descriptions
+  const getStatusDescription = (status, statusOptionsArray = statusOptions) => {
+    // First try to find custom status description
+    const customStatus = statusOptionsArray.find(
+      opt => opt.value.toLowerCase() === status.toLowerCase()
+    );
+    
+    if (customStatus && customStatus.description) {
+      return customStatus.description;
+    }
+    
+    // Fallback to default descriptions
     const descriptions = {
       'Admitted': 'Your pet has arrived and is being settled in',
       'Being Examined': 'Initial examination and assessment',
@@ -156,10 +172,11 @@ const PatientStatusTracker = () => {
       'Ready for Discharge': 'All set to go home!',
       'Discharged': 'Successfully discharged and on the way home'
     };
+    
     return descriptions[status] || 'Status updated';
   };
   
-  // UPDATED: Get current step info with custom status support
+  // UPDATED: Get current step info with custom status support AND description
   const getCurrentStepInfo = () => {
     // First try to find in loaded status options (includes custom statuses)
     const customStatus = statusOptions.find(
@@ -169,7 +186,7 @@ const PatientStatusTracker = () => {
     if (customStatus) {
       return {
         title: customStatus.label,
-        description: customStatus.description || getDefaultDescription(customStatus.value),
+        description: customStatus.description || getStatusDescription(customStatus.value),
         icon: faHeart, // Default icon for custom statuses
         color: customStatus.color
       };
@@ -275,7 +292,7 @@ const PatientStatusTracker = () => {
         
         <div className="timeline-container">
           {statusHistory.map((update, index) => {
-            // UPDATED: Get step info with custom status support
+            // Get step info with custom status support
             const stepInfo = getStepInfo(update.title);
             
             return (
