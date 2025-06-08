@@ -1,4 +1,4 @@
-// src/services/statusService.js - Complete file with active/inactive filter
+// src/services/statusService.js - Fixed to include protection_level
 import { supabase } from '../lib/supabase';
 
 // Get all available statuses (default + custom) for dropdowns - ONLY ACTIVE ONES
@@ -27,14 +27,17 @@ export const getAllStatusOptions = async () => {
         .single();
 
       if (clinic) {
+        // FIXED: Added protection_level to the select statement
         const { data: customStatuses, error } = await supabase
           .from('clinic_statuses')
-          .select('name, color, description')
+          .select('name, color, description, protection_level') // <-- ADDED protection_level
           .eq('clinic_id', clinic.id)
           .eq('is_active', true) // Only active statuses for dropdowns
           .order('order_index', { ascending: true });
 
         if (!error && customStatuses && customStatuses.length > 0) {
+          console.log('Raw custom statuses from database:', customStatuses); // Debug log
+          
           // Apply color corrections to custom statuses
           return customStatuses.map(status => {
             let correctedColor = status.color;
@@ -49,12 +52,16 @@ export const getAllStatusOptions = async () => {
               console.log('Corrected "Being Examined" color from', status.color, 'to', correctedColor);
             }
             
-            return {
+            const statusOption = {
               value: status.name,
               label: status.name,
               color: correctedColor,
-              description: status.description
+              description: status.description,
+              protection_level: status.protection_level // <-- INCLUDE protection_level
             };
+            
+            console.log('Processed status option:', statusOption); // Debug log
+            return statusOption;
           });
         }
       }
@@ -67,16 +74,17 @@ export const getAllStatusOptions = async () => {
       value: status,
       label: status,
       color: getDefaultStatusColor(status),
-      description: null
+      description: null,
+      protection_level: 'none' // Default statuses have no protection
     }));
 
   } catch (error) {
     console.error('Error getting status options:', error);
     // Return basic defaults if everything fails
     return [
-      { value: 'Admitted', label: 'Admitted', color: '#4285f4', description: null },
-      { value: 'In Recovery', label: 'In Recovery', color: '#34a853', description: null },
-      { value: 'Ready for Discharge', label: 'Ready for Discharge', color: '#a142f4', description: null }
+      { value: 'Admitted', label: 'Admitted', color: '#4285f4', description: null, protection_level: 'none' },
+      { value: 'In Recovery', label: 'In Recovery', color: '#34a853', description: null, protection_level: 'none' },
+      { value: 'Ready for Discharge', label: 'Ready for Discharge', color: '#a142f4', description: null, protection_level: 'none' }
     ];
   }
 };

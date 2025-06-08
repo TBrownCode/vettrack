@@ -1,4 +1,4 @@
-// src/pages/PatientDetail.js - Complete file with status protection system
+// src/pages/PatientDetail.js - Complete file with working status protection using simple approach
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,12 +18,11 @@ import {
   faTimes, 
   faEllipsisV,
   faCog,
-  faShieldAlt // New icon for protected statuses
+  faShieldAlt // Icon for protected statuses
 } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
 import { getAllStatusOptions } from '../services/statusService';
-import { useStatusProtection } from '../hooks/useStatusProtection'; // Import the new hook
-import StatusProtectionDialog from '../components/StatusProtectionDialog'; // Import the new component
+import StatusProtectionDialog from '../components/StatusProtectionDialog';
 import '../styles/PatientDetail.css';
 import { updatePatientPhoto } from '../services/patientService';
 import SimpleCameraCapture from '../components/SimpleCameraCapture';
@@ -50,15 +49,15 @@ const PatientDetail = () => {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
-  // Add status protection hook
-  const {
-    protection,
-    requiresProtectionSync,
-    changeStatusWithProtection,
-    handleConfirm,
-    handleCancel,
-    getProtectionDescriptionSync
-  } = useStatusProtection();
+  // Simple protection dialog state
+  const [protectionDialog, setProtectionDialog] = useState({
+    isOpen: false,
+    status: '',
+    patientName: '',
+    protectionType: 'confirmation',
+    onConfirm: null,
+    onCancel: null
+  });
 
   useEffect(() => {
     const loadPatientAndStatuses = async () => {
@@ -71,6 +70,8 @@ const PatientDetail = () => {
           getAllStatusOptions()
         ]);
         
+        console.log('Loaded patient:', patientData);
+        console.log('Loaded status options:', statusOpts);
         setPatient(patientData);
         setStatusOptions(statusOpts);
       } catch (error) {
@@ -85,33 +86,88 @@ const PatientDetail = () => {
     loadPatientAndStatuses();
   }, [id]);
 
-  // Updated handleStatusChange with protection
-  const handleStatusChange = async (newStatus) => {
-    const performStatusChange = async () => {
-      try {
-        await updatePatientStatus(id, newStatus);
-        setPatient(prev => ({
-          ...prev,
-          status: newStatus,
-          lastUpdate: new Date().toLocaleTimeString()
-        }));
-        setShowStatusDropdown(false);
-      } catch (error) {
-        console.error('Error updating status:', error);
-        alert('Failed to update status');
-      }
-    };
+  // Extract the actual status change logic
+  const performStatusChange = async (newStatus) => {
+    try {
+      console.log('Performing status change to:', newStatus);
+      await updatePatientStatus(id, newStatus);
+      setPatient(prev => ({
+        ...prev,
+        status: newStatus,
+        lastUpdate: new Date().toLocaleTimeString()
+      }));
+      setShowStatusDropdown(false);
+      console.log('Status change completed successfully');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Failed to update status');
+    }
+  };
 
-    // Use protection system for status changes
-    changeStatusWithProtection(
-      newStatus,
-      patient.name,
-      performStatusChange,
-      () => {
-        // On cancel, just close the dropdown
-        setShowStatusDropdown(false);
-      }
-    );
+  // FIXED: Simple status change handler with protection
+  const handleStatusChange = async (newStatus) => {
+    console.log('=== STATUS CHANGE ATTEMPT ===');
+    console.log('Attempting to change status to:', newStatus);
+    console.log('Available status options:', statusOptions);
+    
+    // Find the status option to check protection level
+    const statusOption = statusOptions.find(opt => opt.value === newStatus);
+    const protectionLevel = statusOption?.protection_level;
+    
+    console.log('Status option found:', statusOption);
+    console.log('Protection level:', protectionLevel);
+    
+    // Check if protection is needed
+    if (protectionLevel && protectionLevel !== 'none') {
+      console.log('Protection required, showing dialog');
+      
+      // Show protection dialog
+      setProtectionDialog({
+        isOpen: true,
+        status: newStatus,
+        patientName: patient.name,
+        protectionType: protectionLevel,
+        onConfirm: async () => {
+          console.log('Protection confirmed, proceeding with status change');
+          await performStatusChange(newStatus);
+          setProtectionDialog(prev => ({ ...prev, isOpen: false }));
+        },
+        onCancel: () => {
+          console.log('Protection cancelled');
+          setShowStatusDropdown(false);
+          setProtectionDialog(prev => ({ ...prev, isOpen: false }));
+        }
+      });
+    } else {
+      console.log('No protection needed, changing immediately');
+      await performStatusChange(newStatus);
+    }
+  };
+
+  // Helper function to check if status requires protection (for UI indicators)
+  const requiresProtection = (statusName) => {
+    if (!statusOptions || statusOptions.length === 0) return false;
+    const statusOption = statusOptions.find(opt => opt.value === statusName);
+    return statusOption?.protection_level && statusOption.protection_level !== 'none';
+  };
+
+  // Get protection description for tooltips
+  const getProtectionDescription = (statusName) => {
+    if (!statusOptions || statusOptions.length === 0) return 'Standard status change';
+    
+    const statusOption = statusOptions.find(opt => opt.value === statusName);
+    const protectionType = statusOption?.protection_level;
+    
+    switch (protectionType) {
+      case 'double-confirm':
+        return 'Critical status - requires double confirmation';
+      case 'delay':
+        return 'Important status - 5 second delay with cancel option';
+      case 'confirmation':
+        return 'Sensitive status - requires confirmation';
+      default:
+        return 'Standard status change';
+    }
   };
 
   // Updated to handle both profile and status photos
@@ -277,6 +333,7 @@ const PatientDetail = () => {
     try {
       const updatedStatusOptions = await getAllStatusOptions();
       setStatusOptions(updatedStatusOptions);
+      console.log('Refreshed status options after management:', updatedStatusOptions);
     } catch (error) {
       console.error('Error reloading status options:', error);
     }
@@ -293,6 +350,18 @@ const PatientDetail = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showStatusMenu]);
+
+  // Close status dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showStatusDropdown && !event.target.closest('.status-dropdown-container')) {
+        setShowStatusDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showStatusDropdown]);
 
   // Handle both default and custom status styling
   const getStatusStyle = (status) => {
@@ -436,11 +505,11 @@ const PatientDetail = () => {
               } : {}}
             >
               {/* Add protection indicator */}
-              {requiresProtectionSync(patient.status, statusOptions) && (
+              {requiresProtection(patient.status) && (
                 <FontAwesomeIcon 
                   icon={faShieldAlt} 
                   style={{ marginRight: '6px', fontSize: '0.8em' }}
-                  title={getProtectionDescriptionSync(patient.status, statusOptions)}
+                  title={getProtectionDescription(patient.status)}
                 />
               )}
               {patient.status}
@@ -468,7 +537,7 @@ const PatientDetail = () => {
                       <span style={{ color: status.color, marginRight: '8px', fontSize: '18px' }}>●</span>
                       
                       {/* Add protection indicator for critical statuses */}
-                      {requiresProtectionSync(status.value, statusOptions) && (
+                      {requiresProtection(status.value) && (
                         <FontAwesomeIcon 
                           icon={faShieldAlt} 
                           style={{ 
@@ -476,7 +545,7 @@ const PatientDetail = () => {
                             marginRight: '6px', 
                             fontSize: '12px' 
                           }}
-                          title={getProtectionDescriptionSync(status.value, statusOptions)}
+                          title={getProtectionDescription(status.value)}
                         />
                       )}
                       
@@ -549,14 +618,14 @@ const PatientDetail = () => {
         </button>
       </div>
       
-      {/* Add the Status Protection Dialog */}
+      {/* FIXED: Simple Status Protection Dialog */}
       <StatusProtectionDialog
-        isOpen={protection.isOpen}
-        status={protection.status}
-        patientName={protection.patientName}
-        protectionType={protection.protectionType}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
+        isOpen={protectionDialog.isOpen}
+        status={protectionDialog.status}
+        patientName={protectionDialog.patientName}
+        protectionType={protectionDialog.protectionType}
+        onConfirm={protectionDialog.onConfirm}
+        onCancel={protectionDialog.onCancel}
       />
       
       {showCamera && (
