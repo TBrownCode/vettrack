@@ -111,7 +111,7 @@ const CameraCapture = ({ onCapture, onClose }) => {
       );
     }
     
-    // Otherwise show loading message
+    // Otherwise show loading message ok
     return (
       <div className="camera-loading">
         <p>Initializing camera...</p>
