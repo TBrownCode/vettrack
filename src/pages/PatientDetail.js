@@ -1,4 +1,4 @@
-// src/pages/PatientDetail.js - Complete file with working status protection using simple approach
+// src/pages/PatientDetail.js - Complete file with educational resource management
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,7 +18,9 @@ import {
   faTimes, 
   faEllipsisV,
   faCog,
-  faShieldAlt // Icon for protected statuses
+  faShieldAlt, // Icon for protected statuses
+  faVideo,
+  faLink
 } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
 import { getAllStatusOptions } from '../services/statusService';
@@ -30,6 +32,8 @@ import QRCodeGenerator from '../components/QRCodeGenerator';
 import SendUpdateForm from '../components/SendUpdateForm';
 import UpdateConfirmation from '../components/UpdateConfirmation';
 import StatusManagement from '../components/StatusManagement';
+import EducationalResourcesManager from '../components/EducationalResourcesManager';
+import StatusResourceLinker from '../components/StatusResourceLinker';
 
 const PatientDetail = () => {
   const { id } = useParams();
@@ -44,6 +48,8 @@ const PatientDetail = () => {
   const [showSendUpdate, setShowSendUpdate] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showStatusManagement, setShowStatusManagement] = useState(false);
+  const [showEducationalManager, setShowEducationalManager] = useState(false);
+  const [showResourceLinker, setShowResourceLinker] = useState(false);
   const [cameraMode, setCameraMode] = useState('profile');
   const [error, setError] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -610,6 +616,22 @@ const PatientDetail = () => {
         </button>
         
         <button 
+          className="action-button secondary"
+          onClick={() => setShowEducationalManager(true)}
+        >
+          <FontAwesomeIcon icon={faVideo} />
+          Manage Educational Resources
+        </button>
+        
+        <button 
+          className="action-button secondary"
+          onClick={() => setShowResourceLinker(true)}
+        >
+          <FontAwesomeIcon icon={faLink} />
+          Link Resources to Statuses
+        </button>
+        
+        <button 
           className="action-button danger"
           onClick={handleDeletePatient}
         >
@@ -677,6 +699,14 @@ const PatientDetail = () => {
 
       {showStatusManagement && (
         <StatusManagement onClose={handleStatusManagementClose} />
+      )}
+
+      {showEducationalManager && (
+        <EducationalResourcesManager onClose={() => setShowEducationalManager(false)} />
+      )}
+      
+      {showResourceLinker && (
+        <StatusResourceLinker onClose={() => setShowResourceLinker(false)} />
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-/* src/styles/PatientStatusTracker.css - Complete file with photo display styles */
+/* src/styles/PatientStatusTracker.css - Complete file with educational resources */
 .status-tracker-container {
   display: flex;
   flex-direction: column;
@@ -330,6 +330,103 @@
   margin-bottom: 12px;
 }
 
+/* Educational resources container */
+.educational-resources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Resource button base styles */
+.resource-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 2px solid;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  position: relative;
+  min-height: 40px;
+  line-height: 1.3;
+}
+
+.resource-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.resource-button:active {
+  transform: translateY(0);
+}
+
+/* YouTube video button */
+.youtube-button {
+  border-color: #ff0000;
+  color: #ff0000;
+}
+
+.youtube-button:hover {
+  background-color: #fff5f5;
+  border-color: #cc0000;
+}
+
+/* PDF document button */
+.pdf-button {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.pdf-button:hover {
+  background-color: #fdf2f2;
+  border-color: #b02a37;
+}
+
+/* Website/article button */
+.website-button {
+  border-color: #4285f4;
+  color: #4285f4;
+}
+
+.website-button:hover {
+  background-color: #f0f4ff;
+  border-color: #3367d6;
+}
+
+/* Featured resource styling */
+.resource-button[style*="background-color: rgb(255, 243, 205)"] {
+  background-color: #fff3cd !important;
+  border-width: 3px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+}
+
+/* Featured star icon */
+.resource-button .fa-star {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  font-size: 0.7em;
+  color: #ffc107;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+
+/* External link icon styling */
+.resource-button .fa-external-link-alt {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.resource-button:hover .fa-external-link-alt {
+  opacity: 1;
+}
+
 .media-button {
   display: flex;
   align-items: center;
@@ -463,6 +560,55 @@
   font-weight: 500;
 }
 
+/* Loading state for resources */
+.resources-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: #666;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.resources-loading .fa-spinner {
+  font-size: 0.7rem;
+}
+
+/* No resources available state */
+.no-resources {
+  color: #999;
+  font-size: 0.8rem;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* Resource category indicators */
+.resource-category {
+  position: absolute;
+  top: -6px;
+  left: 8px;
+  background-color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #666;
+  border: 1px solid #e0e0e0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Accessibility improvements */
+.resource-button:focus {
+  outline: 2px solid #4285f4;
+  outline-offset: 2px;
+}
+
+.resource-button:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Mobile Responsive */
 @media (max-width: 480px) {
   .status-tracker-container {
@@ -533,6 +679,17 @@
     height: 36px;
     font-size: 1rem;
   }
+
+  .educational-resources {
+    flex-direction: column;
+  }
+  
+  .resource-button {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+  }
 }
 
 @media (max-width: 360px) {
@@ -552,5 +709,55 @@
   .status-photo-thumbnail {
     width: 45px;
     height: 45px;
+  }
+
+  .resource-button {
+    font-size: 0.8rem;
+    padding: 10px 14px;
+  }
+  
+  .resource-button .fa-star {
+    top: 2px;
+    right: 2px;
+    font-size: 0.6em;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .resource-button {
+    border-width: 3px;
+    font-weight: 600;
+  }
+  
+  .resource-button:hover {
+    background-color: white;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .resource-button {
+    transition: none;
+  }
+  
+  .resource-button:hover {
+    transform: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .resource-button {
+    background: white !important;
+    color: black !important;
+    border-color: black !important;
+    box-shadow: none !important;
+  }
+  
+  .resource-button::after {
+    content: " (" attr(title) ")";
+    font-size: 0.7rem;
+    color: #666;
   }
 }
