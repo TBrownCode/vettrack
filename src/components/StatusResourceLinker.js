@@ -1,4 +1,4 @@
-// src/components/StatusResourceLinker.js
+// src/components/StatusResourceLinker.js - Mobile-Optimized Version
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -103,7 +103,7 @@ const StatusResourceLinker = ({ onClose }) => {
   const handleLinkResource = async (resourceId) => {
     try {
       await linkResourceToStatus(selectedStatus, resourceId);
-      await loadStatusResources(); // Refresh the lists
+      await loadStatusResources();
       showSuccess('Resource linked successfully!');
     } catch (error) {
       console.error('Error linking resource:', error);
@@ -118,7 +118,7 @@ const StatusResourceLinker = ({ onClose }) => {
       async () => {
         try {
           await unlinkResourceFromStatus(selectedStatus, resourceId);
-          await loadStatusResources(); // Refresh the lists
+          await loadStatusResources();
           showSuccess('Resource unlinked successfully!');
         } catch (error) {
           console.error('Error unlinking resource:', error);
@@ -131,7 +131,7 @@ const StatusResourceLinker = ({ onClose }) => {
   const handleToggleFeatured = async (resourceId, currentFeatured) => {
     try {
       await updateResourceLinkFeatured(selectedStatus, resourceId, !currentFeatured);
-      await loadStatusResources(); // Refresh the lists
+      await loadStatusResources();
       const action = currentFeatured ? 'removed from featured' : 'marked as featured';
       showSuccess(`Resource ${action} successfully!`);
     } catch (error) {
@@ -167,17 +167,14 @@ const StatusResourceLinker = ({ onClose }) => {
     }
 
     try {
-      // Reorder the linked resources array
       const newLinkedResources = [...linkedResources];
       const draggedResource = newLinkedResources[draggedIndex];
       
       newLinkedResources.splice(draggedIndex, 1);
       newLinkedResources.splice(dropIndex, 0, draggedResource);
       
-      // Update the display immediately
       setLinkedResources(newLinkedResources);
       
-      // Save the new order to database
       const orderedIds = newLinkedResources.map(r => r.id);
       await reorderStatusResourceLinks(selectedStatus, orderedIds);
       
@@ -185,7 +182,6 @@ const StatusResourceLinker = ({ onClose }) => {
     } catch (error) {
       console.error('Error reordering resources:', error);
       showError('Failed to update resource order');
-      // Reload to restore original order
       loadStatusResources();
     }
     
@@ -217,6 +213,213 @@ const StatusResourceLinker = ({ onClose }) => {
     resource.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const renderMobileResourceCard = (resource, isLinked = false, index = null) => (
+    <div
+      key={resource.id}
+      draggable={isLinked}
+      onDragStart={isLinked ? (e) => handleDragStart(e, index) : undefined}
+      onDragOver={isLinked ? (e) => handleDragOver(e, index) : undefined}
+      onDragLeave={isLinked ? handleDragLeave : undefined}
+      onDrop={isLinked ? (e) => handleDrop(e, index) : undefined}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '12px',
+        backgroundColor: dragOverIndex === index ? '#e3f2fd' : 'white',
+        border: '1px solid #e1e5e9',
+        borderRadius: '8px',
+        boxShadow: draggedIndex === index ? '0 4px 12px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.1)',
+        cursor: isLinked ? 'grab' : 'default',
+        transform: draggedIndex === index ? 'rotate(1deg)' : 'none',
+        opacity: draggedIndex === index ? 0.5 : 1,
+        transition: isLinked ? 'all 0.2s ease' : 'none',
+        minHeight: '80px'
+      }}
+    >
+      {/* Header with thumbnail and title */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '8px' }}>
+        {isLinked && (
+          <FontAwesomeIcon 
+            icon={faGripVertical} 
+            style={{ color: '#666', marginRight: '8px', marginTop: '4px', fontSize: '12px' }}
+          />
+        )}
+        
+        {/* Thumbnail */}
+        <div style={{
+          width: '40px',
+          height: '30px',
+          borderRadius: '4px',
+          overflow: 'hidden',
+          marginRight: '8px',
+          backgroundColor: '#f5f5f5',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0
+        }}>
+          {resource.thumbnail_url ? (
+            <img 
+              src={resource.thumbnail_url} 
+              alt={resource.title}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+          ) : (
+            <FontAwesomeIcon 
+              icon={getResourceIcon(resource.resource_type)}
+              style={{
+                fontSize: '14px',
+                color: getResourceTypeColor(resource.resource_type)
+              }}
+            />
+          )}
+        </div>
+
+        {/* Title and type */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontSize: '14px',
+            fontWeight: '600',
+            marginBottom: '2px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            wordBreak: 'break-word',
+            lineHeight: 1.2
+          }}>
+            <FontAwesomeIcon 
+              icon={getResourceIcon(resource.resource_type)}
+              style={{
+                color: getResourceTypeColor(resource.resource_type),
+                fontSize: '12px',
+                flexShrink: 0
+              }}
+            />
+            <span style={{ flex: 1 }}>{resource.title}</span>
+            {isLinked && resource.is_featured && (
+              <FontAwesomeIcon 
+                icon={faStar} 
+                style={{ color: '#ffc107', fontSize: '10px', flexShrink: 0 }}
+                title="Featured resource"
+              />
+            )}
+          </div>
+          
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {resource.category && (
+              <span style={{
+                fontSize: '10px',
+                color: '#666',
+                padding: '1px 4px',
+                backgroundColor: '#e9ecef',
+                borderRadius: '8px'
+              }}>
+                {resource.category}
+              </span>
+            )}
+            <span style={{
+              fontSize: '10px',
+              color: '#999'
+            }}>
+              {resource.resource_type.charAt(0).toUpperCase() + resource.resource_type.slice(1)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions row */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginTop: 'auto'
+      }}>
+        <button
+          onClick={() => window.open(resource.url, '_blank')}
+          style={{
+            background: 'none',
+            border: '1px solid #4285f4',
+            color: '#4285f4',
+            cursor: 'pointer',
+            padding: '4px 8px',
+            fontSize: '10px',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}
+          title="Open resource"
+        >
+          <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '8px' }} />
+          Open
+        </button>
+        
+        <div style={{ display: 'flex', gap: '6px' }}>
+          {isLinked ? (
+            <>
+              <button
+                onClick={() => handleToggleFeatured(resource.id, resource.is_featured)}
+                style={{
+                  background: 'none',
+                  border: '1px solid',
+                  borderColor: resource.is_featured ? '#ffc107' : '#ccc',
+                  color: resource.is_featured ? '#ffc107' : '#ccc',
+                  cursor: 'pointer',
+                  padding: '4px 6px',
+                  fontSize: '10px',
+                  borderRadius: '4px'
+                }}
+                title={resource.is_featured ? 'Remove from featured' : 'Mark as featured'}
+              >
+                <FontAwesomeIcon icon={faStar} />
+              </button>
+              
+              <button
+                onClick={() => handleUnlinkResource(resource.id, resource.title)}
+                style={{
+                  background: 'none',
+                  border: '1px solid #d32f2f',
+                  color: '#d32f2f',
+                  cursor: 'pointer',
+                  padding: '4px 6px',
+                  fontSize: '10px',
+                  borderRadius: '4px'
+                }}
+                title="Unlink resource"
+              >
+                <FontAwesomeIcon icon={faTrash} />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => handleLinkResource(resource.id)}
+              style={{
+                background: '#28a745',
+                border: 'none',
+                color: 'white',
+                cursor: 'pointer',
+                padding: '6px 10px',
+                fontSize: '10px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              title="Link to status"
+            >
+              <FontAwesomeIcon icon={faPlus} style={{ fontSize: '8px' }} />
+              Link
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <div style={{
@@ -230,31 +433,35 @@ const StatusResourceLinker = ({ onClose }) => {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: '20px'
+        padding: '10px'
       }}>
         <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '1000px',
-          maxHeight: '90vh',
-          overflow: 'auto'
+          maxWidth: '100vw',
+          maxHeight: '95vh',
+          overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column'
         }}>
           {/* Header */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '20px',
+            padding: '16px',
             backgroundColor: '#4285f4',
             color: 'white',
-            borderRadius: '12px 12px 0 0'
+            borderRadius: '12px 12px 0 0',
+            flexShrink: 0
           }}>
             <h3 style={{ 
               margin: 0, 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '8px' 
+              gap: '8px',
+              fontSize: '1rem'
             }}>
               <FontAwesomeIcon icon={faLink} />
               Link Resources to Status
@@ -266,47 +473,49 @@ const StatusResourceLinker = ({ onClose }) => {
                 border: 'none', 
                 color: 'white', 
                 fontSize: '1.25rem', 
-                cursor: 'pointer' 
+                cursor: 'pointer',
+                padding: '4px'
               }}
             >
               <FontAwesomeIcon icon={faTimes} />
             </button>
           </div>
 
-          <div style={{ padding: '24px' }}>
+          <div style={{ padding: '16px', flex: 1, overflow: 'auto' }}>
             {error && (
               <div style={{
                 backgroundColor: '#fee',
                 color: '#d63031',
                 padding: '12px',
                 borderRadius: '6px',
-                marginBottom: '20px',
-                border: '1px solid #fab1a0'
+                marginBottom: '16px',
+                border: '1px solid #fab1a0',
+                fontSize: '14px'
               }}>
                 {error}
               </div>
             )}
 
             {/* Status Selector */}
-            <div style={{ marginBottom: '24px' }}>
+            <div style={{ marginBottom: '20px' }}>
               <label style={{ 
                 display: 'block', 
                 marginBottom: '8px', 
                 fontWeight: '600',
-                fontSize: '16px'
+                fontSize: '14px'
               }}>
-                Select Status to Manage:
+                Select Status:
               </label>
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 style={{
-                  padding: '12px',
+                  padding: '10px',
                   border: '2px solid #e1e5e9',
                   borderRadius: '8px',
-                  fontSize: '16px',
+                  fontSize: '14px',
                   width: '100%',
-                  maxWidth: '400px'
+                  boxSizing: 'border-box'
                 }}
               >
                 <option value="">Choose a status...</option>
@@ -319,14 +528,15 @@ const StatusResourceLinker = ({ onClose }) => {
             </div>
 
             {selectedStatus && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                {/* Linked Resources */}
-                <div>
+              <>
+                {/* Linked Resources Section */}
+                <div style={{ marginBottom: '24px' }}>
                   <h4 style={{ 
-                    margin: '0 0 16px 0',
+                    margin: '0 0 12px 0',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '8px',
+                    fontSize: '14px'
                   }}>
                     <FontAwesomeIcon icon={faCheck} style={{ color: '#28a745' }} />
                     Linked to "{selectedStatus}" ({linkedResources.length})
@@ -335,63 +545,142 @@ const StatusResourceLinker = ({ onClose }) => {
                   {linkedResources.length === 0 ? (
                     <div style={{
                       textAlign: 'center',
-                      padding: '40px 20px',
+                      padding: '20px',
                       backgroundColor: '#f8f9fa',
                       borderRadius: '8px',
-                      color: '#666'
+                      color: '#666',
+                      fontSize: '14px'
                     }}>
-                      <p>No resources linked to this status yet.</p>
-                      <p style={{ fontSize: '14px' }}>
-                        Link resources from the right panel to help educate pet owners.
+                      <p style={{ margin: '0 0 8px 0' }}>No resources linked yet.</p>
+                      <p style={{ margin: 0, fontSize: '12px' }}>
+                        Link resources below to help educate pet owners.
                       </p>
                     </div>
                   ) : (
                     <>
                       <div style={{
-                        fontSize: '12px',
+                        fontSize: '11px',
                         color: '#666',
                         marginBottom: '12px',
                         fontStyle: 'italic'
                       }}>
-                        Drag to reorder • ⭐ = Featured resources shown first
+                        Drag to reorder • ⭐ = Featured (shown first)
                       </div>
                       
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {linkedResources.map((resource, index) => (
-                          <div
-                            key={resource.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, index)}
-                            onDragOver={(e) => handleDragOver(e, index)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={(e) => handleDrop(e, index)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              padding: '12px',
-                              backgroundColor: dragOverIndex === index ? '#e3f2fd' : 'white',
-                              border: '1px solid #e1e5e9',
-                              borderRadius: '8px',
-                              boxShadow: draggedIndex === index ? '0 4px 12px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.1)',
-                              cursor: 'grab',
-                              transform: draggedIndex === index ? 'rotate(2deg)' : 'none',
-                              opacity: draggedIndex === index ? 0.5 : 1,
-                              transition: 'all 0.2s ease'
-                            }}
-                          >
-                            {/* Drag handle */}
-                            <FontAwesomeIcon 
-                              icon={faGripVertical} 
-                              style={{ color: '#666', marginRight: '12px' }}
-                            />
+                      <div style={{ 
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: '8px'
+                      }}>
+                        {linkedResources.map((resource, index) => 
+                          renderMobileResourceCard(resource, true, index)
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
 
+                {/* Available Resources Section */}
+                <div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '12px'
+                  }}>
+                    <h4 style={{ 
+                      margin: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px'
+                    }}>
+                      <FontAwesomeIcon icon={faPlus} style={{ color: '#28a745' }} />
+                      Available ({filteredAvailableResources.length})
+                    </h4>
+                  </div>
+
+                  {/* Search */}
+                  <div style={{ 
+                    position: 'relative', 
+                    marginBottom: '12px' 
+                  }}>
+                    <FontAwesomeIcon 
+                      icon={faSearch} 
+                      style={{
+                        position: 'absolute',
+                        left: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: '#666',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Search resources..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px 8px 32px',
+                        border: '1px solid #e1e5e9',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  {filteredAvailableResources.length === 0 ? (
+                    <div style={{
+                      textAlign: 'center',
+                      padding: '20px',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '8px',
+                      color: '#666',
+                      fontSize: '14px'
+                    }}>
+                      {availableResources.length === 0 ? (
+                        <>
+                          <p style={{ margin: '0 0 8px 0' }}>All resources are linked.</p>
+                          <p style={{ margin: 0, fontSize: '12px' }}>
+                            Create more in the Resource Bank.
+                          </p>
+                        </>
+                      ) : (
+                        <p style={{ margin: 0 }}>No resources match your search.</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ 
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      {filteredAvailableResources.map((resource) => (
+                        <div
+                          key={resource.id}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            padding: '12px',
+                            backgroundColor: 'white',
+                            border: '1px solid #e1e5e9',
+                            borderRadius: '8px',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                            minHeight: '80px'
+                          }}
+                        >
+                          {/* Header with thumbnail and title */}
+                          <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '8px' }}>
                             {/* Thumbnail */}
                             <div style={{
-                              width: '50px',
-                              height: '38px',
+                              width: '40px',
+                              height: '30px',
                               borderRadius: '4px',
                               overflow: 'hidden',
-                              marginRight: '12px',
+                              marginRight: '8px',
                               backgroundColor: '#f5f5f5',
                               display: 'flex',
                               alignItems: 'center',
@@ -412,299 +701,102 @@ const StatusResourceLinker = ({ onClose }) => {
                                 <FontAwesomeIcon 
                                   icon={getResourceIcon(resource.resource_type)}
                                   style={{
-                                    fontSize: '16px',
+                                    fontSize: '14px',
                                     color: getResourceTypeColor(resource.resource_type)
                                   }}
                                 />
                               )}
                             </div>
 
-                            {/* Content */}
+                            {/* Title and type */}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{
                                 fontSize: '14px',
                                 fontWeight: '600',
-                                marginBottom: '4px',
+                                marginBottom: '2px',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px'
+                                gap: '6px',
+                                wordBreak: 'break-word',
+                                lineHeight: 1.2
                               }}>
                                 <FontAwesomeIcon 
                                   icon={getResourceIcon(resource.resource_type)}
                                   style={{
                                     color: getResourceTypeColor(resource.resource_type),
-                                    fontSize: '12px'
+                                    fontSize: '12px',
+                                    flexShrink: 0
                                   }}
                                 />
-                                {resource.title}
-                                {resource.is_featured && (
-                                  <FontAwesomeIcon 
-                                    icon={faStar} 
-                                    style={{ color: '#ffc107', fontSize: '12px' }}
-                                    title="Featured resource"
-                                  />
-                                )}
+                                <span style={{ flex: 1 }}>{resource.title}</span>
                               </div>
-                              {resource.category && (
-                                <div style={{
-                                  fontSize: '11px',
-                                  color: '#666',
-                                  padding: '2px 6px',
-                                  backgroundColor: '#e9ecef',
-                                  borderRadius: '10px',
-                                  display: 'inline-block'
-                                }}>
-                                  {resource.category}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Actions */}
-                            <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
-                              <button
-                                onClick={() => window.open(resource.url, '_blank')}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: '#4285f4',
-                                  cursor: 'pointer',
-                                  padding: '4px',
-                                  fontSize: '12px'
-                                }}
-                                title="Open resource"
-                              >
-                                <FontAwesomeIcon icon={faExternalLinkAlt} />
-                              </button>
                               
-                              <button
-                                onClick={() => handleToggleFeatured(resource.id, resource.is_featured)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: resource.is_featured ? '#ffc107' : '#ccc',
-                                  cursor: 'pointer',
-                                  padding: '4px',
-                                  fontSize: '12px'
-                                }}
-                                title={resource.is_featured ? 'Remove from featured' : 'Mark as featured'}
-                              >
-                                <FontAwesomeIcon icon={faStar} />
-                              </button>
-                              
-                              <button
-                                onClick={() => handleUnlinkResource(resource.id, resource.title)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: '#d32f2f',
-                                  cursor: 'pointer',
-                                  padding: '4px',
-                                  fontSize: '12px'
-                                }}
-                                title="Unlink resource"
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Available Resources */}
-                <div>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '16px'
-                  }}>
-                    <h4 style={{ 
-                      margin: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      <FontAwesomeIcon icon={faPlus} style={{ color: '#28a745' }} />
-                      Available Resources ({filteredAvailableResources.length})
-                    </h4>
-                  </div>
-
-                  {/* Search */}
-                  <div style={{ 
-                    position: 'relative', 
-                    marginBottom: '16px' 
-                  }}>
-                    <FontAwesomeIcon 
-                      icon={faSearch} 
-                      style={{
-                        position: 'absolute',
-                        left: '12px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: '#666',
-                        fontSize: '14px'
-                      }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Search available resources..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px 10px 36px',
-                        border: '1px solid #e1e5e9',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-
-                  {filteredAvailableResources.length === 0 ? (
-                    <div style={{
-                      textAlign: 'center',
-                      padding: '40px 20px',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: '8px',
-                      color: '#666'
-                    }}>
-                      {availableResources.length === 0 ? (
-                        <>
-                          <p>All resources are already linked to this status.</p>
-                          <p style={{ fontSize: '14px' }}>
-                            Create more resources in the Resource Bank to add them here.
-                          </p>
-                        </>
-                      ) : (
-                        <p>No resources match your search.</p>
-                      )}
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {filteredAvailableResources.map((resource) => (
-                        <div 
-                          key={resource.id}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '12px',
-                            backgroundColor: 'white',
-                            border: '1px solid #e1e5e9',
-                            borderRadius: '8px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                          }}
-                        >
-                          {/* Thumbnail */}
-                          <div style={{
-                            width: '50px',
-                            height: '38px',
-                            borderRadius: '4px',
-                            overflow: 'hidden',
-                            marginRight: '12px',
-                            backgroundColor: '#f5f5f5',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}>
-                            {resource.thumbnail_url ? (
-                              <img 
-                                src={resource.thumbnail_url} 
-                                alt={resource.title}
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover'
-                                }}
-                              />
-                            ) : (
-                              <FontAwesomeIcon 
-                                icon={getResourceIcon(resource.resource_type)}
-                                style={{
-                                  fontSize: '16px',
-                                  color: getResourceTypeColor(resource.resource_type)
-                                }}
-                              />
-                            )}
-                          </div>
-
-                          {/* Content */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              fontSize: '14px',
-                              fontWeight: '600',
-                              marginBottom: '4px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px'
-                            }}>
-                              <FontAwesomeIcon 
-                                icon={getResourceIcon(resource.resource_type)}
-                                style={{
-                                  color: getResourceTypeColor(resource.resource_type),
-                                  fontSize: '12px'
-                                }}
-                              />
-                              {resource.title}
-                            </div>
-                            
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              {resource.category && (
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                {resource.category && (
+                                  <span style={{
+                                    fontSize: '10px',
+                                    color: '#666',
+                                    padding: '1px 4px',
+                                    backgroundColor: '#e9ecef',
+                                    borderRadius: '8px'
+                                  }}>
+                                    {resource.category}
+                                  </span>
+                                )}
                                 <span style={{
-                                  fontSize: '11px',
-                                  color: '#666',
-                                  padding: '2px 6px',
-                                  backgroundColor: '#e9ecef',
-                                  borderRadius: '10px'
+                                  fontSize: '10px',
+                                  color: '#999'
                                 }}>
-                                  {resource.category}
+                                  {resource.resource_type.charAt(0).toUpperCase() + resource.resource_type.slice(1)}
                                 </span>
-                              )}
-                              <span style={{
-                                fontSize: '11px',
-                                color: '#999'
-                              }}>
-                                {resource.resource_type.charAt(0).toUpperCase() + resource.resource_type.slice(1)}
-                              </span>
+                              </div>
                             </div>
                           </div>
 
-                          {/* Actions */}
-                          <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
+                          {/* Actions row */}
+                          <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            marginTop: 'auto'
+                          }}>
                             <button
                               onClick={() => window.open(resource.url, '_blank')}
                               style={{
                                 background: 'none',
-                                border: 'none',
+                                border: '1px solid #4285f4',
                                 color: '#4285f4',
                                 cursor: 'pointer',
-                                padding: '4px',
-                                fontSize: '12px'
+                                padding: '4px 8px',
+                                fontSize: '10px',
+                                borderRadius: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
                               }}
-                              title="Preview resource"
+                              title="Open resource"
                             >
-                              <FontAwesomeIcon icon={faExternalLinkAlt} />
+                              <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '8px' }} />
+                              Open
                             </button>
                             
                             <button
                               onClick={() => handleLinkResource(resource.id)}
                               style={{
-                                background: 'none',
+                                background: '#28a745',
                                 border: 'none',
-                                color: '#28a745',
+                                color: 'white',
                                 cursor: 'pointer',
-                                padding: '6px 12px',
-                                fontSize: '12px',
+                                padding: '6px 10px',
+                                fontSize: '10px',
                                 borderRadius: '4px',
-                                backgroundColor: '#e8f5e9'
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
                               }}
                               title="Link to status"
                             >
-                              <FontAwesomeIcon icon={faPlus} style={{ marginRight: '4px' }} />
+                              <FontAwesomeIcon icon={faPlus} style={{ fontSize: '8px' }} />
                               Link
                             </button>
                           </div>
@@ -713,25 +805,24 @@ const StatusResourceLinker = ({ onClose }) => {
                     </div>
                   )}
                 </div>
-              </div>
+              </>
             )}
 
             {/* Instructions */}
             <div style={{
-              marginTop: '24px',
-              padding: '16px',
+              marginTop: '20px',
+              padding: '12px',
               backgroundColor: '#e8f0fe',
               borderRadius: '8px',
-              fontSize: '14px',
+              fontSize: '12px',
               color: '#1a73e8'
             }}>
-              <h5 style={{ margin: '0 0 8px 0', color: '#1a73e8' }}>How it works:</h5>
-              <ul style={{ margin: 0, paddingLeft: '16px' }}>
-                <li>Select a status from the dropdown above</li>
-                <li>Link educational resources to help owners understand what's happening</li>
-                <li>Drag linked resources to reorder them (featured resources show first)</li>
-                <li>Resources will appear as clickable buttons on the owner's status timeline</li>
-                <li>★ Featured resources are highlighted and shown prominently</li>
+              <h5 style={{ margin: '0 0 6px 0', color: '#1a73e8', fontSize: '13px' }}>How it works:</h5>
+              <ul style={{ margin: 0, paddingLeft: '14px' }}>
+                <li>Select a status above</li>
+                <li>Link resources to help educate owners</li>
+                <li>Drag to reorder (⭐ featured show first)</li>
+                <li>Resources appear on owner timeline</li>
               </ul>
             </div>
           </div>

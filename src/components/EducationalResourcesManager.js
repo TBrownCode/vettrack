@@ -1,4 +1,4 @@
-// src/components/EducationalResourcesManager.js
+// src/components/EducationalResourcesManager.js - Mobile-Optimized Version
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -44,16 +44,6 @@ const EducationalResourcesManager = ({ onClose }) => {
   const { toasts, showSuccess, showError, hideToast } = useToast();
   const { confirmation, handleConfirm, handleCancel, confirmDelete } = useConfirmation();
 
-  // Color options
-  const colorOptions = [
-    '#4285f4', // Blue
-    '#34a853', // Green
-    '#ea4335', // Red
-    '#fbbc05', // Yellow
-    '#fa903e', // Orange
-    '#a142f4'  // Purple
-  ];
-
   useEffect(() => {
     loadResources();
   }, []);
@@ -63,7 +53,6 @@ const EducationalResourcesManager = ({ onClose }) => {
       setLoading(true);
       setError('');
 
-      // Get clinic ID
       const { data: clinic } = await supabase
         .from('clinics')
         .select('id')
@@ -114,7 +103,6 @@ const EducationalResourcesManager = ({ onClose }) => {
       setLoading(true);
       setError('');
 
-      // Get clinic ID
       const { data: clinic } = await supabase
         .from('clinics')
         .select('id')
@@ -144,7 +132,7 @@ const EducationalResourcesManager = ({ onClose }) => {
         thumbnail_url: thumbnailUrl,
         is_active: true,
         order_index: resources.length + 1,
-        created_by: 'Current User' // You might want to get actual user info
+        created_by: 'Current User'
       };
 
       const { data, error } = await supabase
@@ -194,7 +182,6 @@ const EducationalResourcesManager = ({ onClose }) => {
       setLoading(true);
       setError('');
 
-      // Auto-generate thumbnail for YouTube videos
       let thumbnailUrl = formData.thumbnail_url;
       if (formData.resource_type === 'youtube' && (formData.url.includes('youtube.com') || formData.url.includes('youtu.be'))) {
         const videoId = extractYouTubeVideoId(formData.url);
@@ -239,8 +226,7 @@ const EducationalResourcesManager = ({ onClose }) => {
 
   const handleCancelEdit = () => {
     setEditingResource(null);
-    setFormData({ title: '', description: '', url: '', resource_type: 'youtube', category: '', thumbnail_url: '' });
-    setError('');
+    resetForm();
   };
 
   const handleToggleActive = async (resourceId, currentActiveState, resourceTitle) => {
@@ -334,6 +320,211 @@ const EducationalResourcesManager = ({ onClose }) => {
     return matchesSearch && matchesType;
   });
 
+  const renderMobileResourceCard = (resource) => (
+    <div 
+      key={resource.id}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '12px',
+        backgroundColor: 'white',
+        border: '1px solid #e1e5e9',
+        borderRadius: '8px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        opacity: resource.is_active ? 1 : 0.6
+      }}
+    >
+      {/* Header with thumbnail and title */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '8px' }}>
+        {/* Thumbnail */}
+        <div style={{
+          width: '50px',
+          height: '38px',
+          borderRadius: '6px',
+          overflow: 'hidden',
+          marginRight: '12px',
+          backgroundColor: '#f5f5f5',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0
+        }}>
+          {resource.thumbnail_url ? (
+            <img 
+              src={resource.thumbnail_url} 
+              alt={resource.title}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+          ) : (
+            <FontAwesomeIcon 
+              icon={getResourceIcon(resource.resource_type)}
+              style={{
+                fontSize: '18px',
+                color: getResourceTypeColor(resource.resource_type)
+              }}
+            />
+          )}
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h5 style={{
+            margin: '0 0 4px 0',
+            fontSize: '14px',
+            fontWeight: '600',
+            wordBreak: 'break-word',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            lineHeight: 1.2
+          }}>
+            <FontAwesomeIcon 
+              icon={getResourceIcon(resource.resource_type)}
+              style={{
+                color: getResourceTypeColor(resource.resource_type),
+                fontSize: '12px'
+              }}
+            />
+            {resource.title}
+          </h5>
+          
+          {resource.description && (
+            <p style={{
+              margin: '0 0 6px 0',
+              fontSize: '12px',
+              color: '#666',
+              lineHeight: '1.3'
+            }}>
+              {resource.description}
+            </p>
+          )}
+          
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '10px',
+            color: '#999',
+            flexWrap: 'wrap'
+          }}>
+            {resource.category && (
+              <span style={{
+                padding: '2px 6px',
+                backgroundColor: '#e9ecef',
+                borderRadius: '10px',
+                color: '#666'
+              }}>
+                {resource.category}
+              </span>
+            )}
+            <span>
+              {resource.resource_type.charAt(0).toUpperCase() + resource.resource_type.slice(1)}
+            </span>
+          </div>
+        </div>
+
+        {/* Active indicator */}
+        <div 
+          style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: resource.is_active ? '#34a853' : '#ccc',
+            flexShrink: 0,
+            marginLeft: '8px',
+            marginTop: '4px'
+          }}
+          title={resource.is_active ? 'Active' : 'Inactive'}
+        />
+      </div>
+
+      {/* Action buttons */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: '8px',
+        paddingTop: '8px',
+        borderTop: '1px solid #f0f0f0'
+      }}>
+        <button
+          onClick={() => window.open(resource.url, '_blank')}
+          style={{
+            background: 'none',
+            border: '1px solid #4285f4',
+            color: '#4285f4',
+            cursor: 'pointer',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            fontSize: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}
+          title="Open resource"
+        >
+          <FontAwesomeIcon icon={faLink} style={{ fontSize: '8px' }} />
+          Open
+        </button>
+        
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button
+            onClick={() => handleToggleActive(resource.id, resource.is_active, resource.title)}
+            style={{
+              background: 'none',
+              border: '1px solid',
+              borderColor: resource.is_active ? '#d32f2f' : '#28a745',
+              color: resource.is_active ? '#d32f2f' : '#28a745',
+              cursor: 'pointer',
+              padding: '4px 6px',
+              borderRadius: '4px',
+              fontSize: '10px'
+            }}
+            title={resource.is_active ? 'Deactivate' : 'Activate'}
+          >
+            <FontAwesomeIcon icon={resource.is_active ? faEyeSlash : faEye} />
+          </button>
+          
+          <button
+            onClick={() => handleEditResource(resource)}
+            style={{
+              background: 'none',
+              border: '1px solid #ffc107',
+              color: '#ffc107',
+              cursor: 'pointer',
+              padding: '4px 6px',
+              borderRadius: '4px',
+              fontSize: '10px'
+            }}
+            title="Edit resource"
+          >
+            <FontAwesomeIcon icon={faEdit} />
+          </button>
+          
+          <button
+            onClick={() => handleDeleteResource(resource.id, resource.title)}
+            style={{
+              background: 'none',
+              border: '1px solid #d32f2f',
+              color: '#d32f2f',
+              cursor: 'pointer',
+              padding: '4px 6px',
+              borderRadius: '4px',
+              fontSize: '10px'
+            }}
+            title="Delete resource"
+          >
+            <FontAwesomeIcon icon={faTrash} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <div style={{
@@ -347,31 +538,35 @@ const EducationalResourcesManager = ({ onClose }) => {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: '20px'
+        padding: '10px'
       }}>
         <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '900px',
-          maxHeight: '90vh',
-          overflow: 'auto'
+          maxWidth: '100vw',
+          maxHeight: '95vh',
+          overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column'
         }}>
           {/* Header */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '20px',
+            padding: '16px',
             backgroundColor: '#4285f4',
             color: 'white',
-            borderRadius: '12px 12px 0 0'
+            borderRadius: '12px 12px 0 0',
+            flexShrink: 0
           }}>
             <h3 style={{ 
               margin: 0, 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '8px' 
+              gap: '8px',
+              fontSize: '1rem'
             }}>
               <FontAwesomeIcon icon={faVideo} />
               Educational Resources Bank
@@ -390,15 +585,16 @@ const EducationalResourcesManager = ({ onClose }) => {
             </button>
           </div>
 
-          <div style={{ padding: '24px' }}>
+          <div style={{ padding: '16px', flex: 1, overflow: 'auto' }}>
             {error && (
               <div style={{
                 backgroundColor: '#fee',
                 color: '#d63031',
                 padding: '12px',
                 borderRadius: '6px',
-                marginBottom: '20px',
-                border: '1px solid #fab1a0'
+                marginBottom: '16px',
+                border: '1px solid #fab1a0',
+                fontSize: '14px'
               }}>
                 {error}
               </div>
@@ -407,22 +603,21 @@ const EducationalResourcesManager = ({ onClose }) => {
             {/* Controls */}
             <div style={{
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '20px',
-              flexWrap: 'wrap',
-              gap: '12px'
+              flexDirection: 'column',
+              gap: '12px',
+              marginBottom: '16px'
             }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
                   <FontAwesomeIcon 
                     icon={faSearch} 
                     style={{
                       position: 'absolute',
-                      left: '12px',
+                      left: '10px',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      color: '#666'
+                      color: '#666',
+                      fontSize: '12px'
                     }}
                   />
                   <input
@@ -431,11 +626,12 @@ const EducationalResourcesManager = ({ onClose }) => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{
-                      padding: '8px 12px 8px 36px',
+                      width: '100%',
+                      padding: '8px 10px 8px 32px',
                       border: '1px solid #e1e5e9',
                       borderRadius: '6px',
                       fontSize: '14px',
-                      width: '200px'
+                      boxSizing: 'border-box'
                     }}
                   />
                 </div>
@@ -444,7 +640,7 @@ const EducationalResourcesManager = ({ onClose }) => {
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                   style={{
-                    padding: '8px 12px',
+                    padding: '8px 10px',
                     border: '1px solid #e1e5e9',
                     borderRadius: '6px',
                     fontSize: '14px'
@@ -464,7 +660,7 @@ const EducationalResourcesManager = ({ onClose }) => {
                   resetForm();
                 }}
                 style={{
-                  padding: '10px 20px',
+                  padding: '10px 16px',
                   backgroundColor: '#4285f4',
                   color: 'white',
                   border: 'none',
@@ -472,6 +668,7 @@ const EducationalResourcesManager = ({ onClose }) => {
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: '8px',
                   fontSize: '14px',
                   fontWeight: '500'
@@ -485,27 +682,28 @@ const EducationalResourcesManager = ({ onClose }) => {
             {/* Add/Edit Form */}
             {(showAddForm || editingResource) && (
               <div style={{
-                marginBottom: '24px',
-                padding: '20px',
+                marginBottom: '20px',
+                padding: '16px',
                 backgroundColor: editingResource ? '#fff3cd' : '#f8f9fa',
                 borderRadius: '8px',
                 border: editingResource ? '1px solid #ffeaa7' : '1px solid #e9ecef'
               }}>
                 <h4 style={{ 
-                  margin: '0 0 16px 0', 
+                  margin: '0 0 12px 0', 
                   color: editingResource ? '#856404' : '#333',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  fontSize: '14px'
                 }}>
                   <FontAwesomeIcon icon={editingResource ? faEdit : faPlus} />
                   {editingResource ? `Editing: ${editingResource.title}` : 'Add New Resource'}
                 </h4>
                 
                 <form onSubmit={editingResource ? handleSaveEdit : handleAddResource}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
+                      <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '12px' }}>
                         Title*
                       </label>
                       <input
@@ -515,7 +713,7 @@ const EducationalResourcesManager = ({ onClose }) => {
                         placeholder="e.g., Post-Surgery Care for Dogs"
                         style={{
                           width: '100%',
-                          padding: '10px',
+                          padding: '8px',
                           border: '2px solid #e1e5e9',
                           borderRadius: '6px',
                           fontSize: '14px',
@@ -526,7 +724,7 @@ const EducationalResourcesManager = ({ onClose }) => {
                     </div>
                     
                     <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
+                      <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '12px' }}>
                         Type*
                       </label>
                       <select
@@ -534,7 +732,7 @@ const EducationalResourcesManager = ({ onClose }) => {
                         onChange={(e) => setFormData(prev => ({ ...prev, resource_type: e.target.value }))}
                         style={{
                           width: '100%',
-                          padding: '10px',
+                          padding: '8px',
                           border: '2px solid #e1e5e9',
                           borderRadius: '6px',
                           fontSize: '14px',
@@ -546,131 +744,116 @@ const EducationalResourcesManager = ({ onClose }) => {
                         <option value="website">Website/Article</option>
                       </select>
                     </div>
-                  </div>
 
-                  <div style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
-                      URL*
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.url}
-                      onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                      placeholder="https://www.youtube.com/watch?v=... or https://example.com/guide.pdf"
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '2px solid #e1e5e9',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box'
-                      }}
-                      required
-                    />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                     <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.category}
-                        onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                        placeholder="e.g., Post-Surgery, Dental Care"
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          border: '2px solid #e1e5e9',
-                          borderRadius: '6px',
-                          fontSize: '14px',
-                          boxSizing: 'border-box'
-                        }}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
-                        Thumbnail URL (optional)
+                      <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '12px' }}>
+                        URL*
                       </label>
                       <input
                         type="url"
-                        value={formData.thumbnail_url}
-                        onChange={(e) => setFormData(prev => ({ ...prev, thumbnail_url: e.target.value }))}
-                        placeholder="Auto-generated for YouTube videos"
+                        value={formData.url}
+                        onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                        placeholder="https://www.youtube.com/watch?v=..."
                         style={{
                           width: '100%',
-                          padding: '10px',
+                          padding: '8px',
                           border: '2px solid #e1e5e9',
                           borderRadius: '6px',
                           fontSize: '14px',
                           boxSizing: 'border-box'
                         }}
+                        required
                       />
                     </div>
-                  </div>
 
-                  <div style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
-                      Description
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Brief description of what this resource covers"
-                      rows="3"
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '2px solid #e1e5e9',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box',
-                        resize: 'vertical'
-                      }}
-                    />
-                  </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '12px' }}>
+                          Category
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.category}
+                          onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                          placeholder="e.g., Surgery"
+                          style={{
+                            width: '100%',
+                            padding: '8px',
+                            border: '2px solid #e1e5e9',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                    </div>
 
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <button 
-                      type="submit" 
-                      disabled={loading}
-                      style={{
-                        padding: '12px 20px',
-                        backgroundColor: editingResource ? '#28a745' : '#4285f4',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: loading ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        opacity: loading ? 0.6 : 1
-                      }}
-                    >
-                      <FontAwesomeIcon icon={editingResource ? faSave : faPlus} />
-                      {loading ? 'Saving...' : (editingResource ? 'Save Changes' : 'Add Resource')}
-                    </button>
-                    
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setShowAddForm(false);
-                        setEditingResource(null);
-                        resetForm();
-                      }}
-                      style={{
-                        padding: '12px 20px',
-                        backgroundColor: '#6c757d',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Cancel
-                    </button>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '12px' }}>
+                        Description
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Brief description..."
+                        rows="2"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          border: '2px solid #e1e5e9',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          boxSizing: 'border-box',
+                          resize: 'vertical'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        type="submit" 
+                        disabled={loading}
+                        style={{
+                          flex: 1,
+                          padding: '10px 16px',
+                          backgroundColor: editingResource ? '#28a745' : '#4285f4',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: loading ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          opacity: loading ? 0.6 : 1,
+                          fontSize: '14px'
+                        }}
+                      >
+                        <FontAwesomeIcon icon={editingResource ? faSave : faPlus} />
+                        {loading ? 'Saving...' : (editingResource ? 'Save' : 'Add')}
+                      </button>
+                      
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setShowAddForm(false);
+                          setEditingResource(null);
+                          resetForm();
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '10px 16px',
+                          backgroundColor: '#6c757d',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>
@@ -682,264 +865,72 @@ const EducationalResourcesManager = ({ onClose }) => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '16px'
+                marginBottom: '12px'
               }}>
-                <h4 style={{ margin: 0 }}>
+                <h4 style={{ margin: 0, fontSize: '14px' }}>
                   Resources ({filteredResources.length})
                 </h4>
                 <div style={{
-                  fontSize: '12px',
+                  fontSize: '10px',
                   color: '#666',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '16px'
+                  gap: '12px'
                 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34a853' }}></div>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#34a853' }}></div>
                     Active
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ccc' }}></div>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ccc' }}></div>
                     Inactive
                   </span>
                 </div>
               </div>
 
               {loading ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                <div style={{ textAlign: 'center', padding: '20px', color: '#666', fontSize: '14px' }}>
                   Loading resources...
                 </div>
               ) : filteredResources.length === 0 ? (
                 <div style={{
                   textAlign: 'center',
-                  padding: '40px 20px',
+                  padding: '30px 20px',
                   color: '#666',
                   backgroundColor: '#f8f9fa',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
+                  fontSize: '14px'
                 }}>
                   {searchTerm || filterType !== 'all' ? (
-                    <p>No resources match your search criteria.</p>
+                    <p style={{ margin: 0 }}>No resources match your criteria.</p>
                   ) : (
                     <>
-                      <p>No educational resources yet.</p>
-                      <p style={{ fontSize: '14px' }}>Add YouTube videos, PDFs, and websites to help educate pet owners!</p>
+                      <p style={{ margin: '0 0 8px 0' }}>No educational resources yet.</p>
+                      <p style={{ margin: 0, fontSize: '12px' }}>Add YouTube videos, PDFs, and websites!</p>
                     </>
                   )}
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {filteredResources.map((resource) => (
-                    <div 
-                      key={resource.id}
-                      style={{
-                        display: 'flex',
-                        padding: '16px',
-                        backgroundColor: 'white',
-                        border: '1px solid #e1e5e9',
-                        borderRadius: '8px',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                        opacity: resource.is_active ? 1 : 0.6
-                      }}
-                    >
-                      {/* Thumbnail */}
-                      <div style={{
-                        width: '80px',
-                        height: '60px',
-                        borderRadius: '6px',
-                        overflow: 'hidden',
-                        marginRight: '16px',
-                        backgroundColor: '#f5f5f5',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}>
-                        {resource.thumbnail_url ? (
-                          <img 
-                            src={resource.thumbnail_url} 
-                            alt={resource.title}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover'
-                            }}
-                          />
-                        ) : (
-                          <FontAwesomeIcon 
-                            icon={getResourceIcon(resource.resource_type)}
-                            style={{
-                              fontSize: '24px',
-                              color: getResourceTypeColor(resource.resource_type)
-                            }}
-                          />
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          justifyContent: 'space-between',
-                          marginBottom: '8px'
-                        }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <h5 style={{
-                              margin: '0 0 4px 0',
-                              fontSize: '16px',
-                              fontWeight: '600',
-                              wordBreak: 'break-word',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px'
-                            }}>
-                              <FontAwesomeIcon 
-                                icon={getResourceIcon(resource.resource_type)}
-                                style={{
-                                  color: getResourceTypeColor(resource.resource_type),
-                                  fontSize: '14px'
-                                }}
-                              />
-                              {resource.title}
-                            </h5>
-                            
-                            {resource.description && (
-                              <p style={{
-                                margin: '0 0 8px 0',
-                                fontSize: '14px',
-                                color: '#666',
-                                lineHeight: '1.4'
-                              }}>
-                                {resource.description}
-                              </p>
-                            )}
-                            
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                              fontSize: '12px',
-                              color: '#999'
-                            }}>
-                              {resource.category && (
-                                <span style={{
-                                  padding: '2px 8px',
-                                  backgroundColor: '#e9ecef',
-                                  borderRadius: '12px',
-                                  color: '#666'
-                                }}>
-                                  {resource.category}
-                                </span>
-                              )}
-                              <span>
-                                {resource.resource_type.charAt(0).toUpperCase() + resource.resource_type.slice(1)}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginLeft: '16px'
-                          }}>
-                            {/* Active indicator */}
-                            <div 
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                backgroundColor: resource.is_active ? '#34a853' : '#ccc',
-                                flexShrink: 0
-                              }}
-                              title={resource.is_active ? 'Active' : 'Inactive'}
-                            />
-
-                            {/* Action buttons */}
-                            <button
-                              onClick={() => window.open(resource.url, '_blank')}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#4285f4',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                borderRadius: '4px',
-                                fontSize: '14px'
-                              }}
-                              title="Open resource"
-                            >
-                              <FontAwesomeIcon icon={faLink} />
-                            </button>
-                            
-                            <button
-                              onClick={() => handleToggleActive(resource.id, resource.is_active, resource.title)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: resource.is_active ? '#d32f2f' : '#28a745',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                borderRadius: '4px',
-                                fontSize: '14px'
-                              }}
-                              title={resource.is_active ? 'Deactivate' : 'Activate'}
-                            >
-                              <FontAwesomeIcon icon={resource.is_active ? faEyeSlash : faEye} />
-                            </button>
-                            
-                            <button
-                              onClick={() => handleEditResource(resource)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#ffc107',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                borderRadius: '4px',
-                                fontSize: '14px'
-                              }}
-                              title="Edit resource"
-                            >
-                              <FontAwesomeIcon icon={faEdit} />
-                            </button>
-                            
-                            <button
-                              onClick={() => handleDeleteResource(resource.id, resource.title)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#d32f2f',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                borderRadius: '4px',
-                                fontSize: '14px'
-                              }}
-                              title="Delete resource"
-                            >
-                              <FontAwesomeIcon icon={faTrash} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div style={{ 
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: '12px'
+                }}>
+                  {filteredResources.map(renderMobileResourceCard)}
                 </div>
               )}
             </div>
 
             <div style={{
-              marginTop: '24px',
+              marginTop: '16px',
               padding: '12px',
               backgroundColor: '#e8f0fe',
               borderRadius: '6px',
-              fontSize: '14px',
+              fontSize: '12px',
               color: '#1a73e8'
             }}>
-              <strong>Next Step:</strong> After adding resources here, you can link them to specific statuses 
-              in the Status Management section. Resources linked to statuses will appear on the owner's 
-              status tracking timeline.
+              <strong>Next Step:</strong> After adding resources here, link them to specific statuses 
+              in the Status Management section.
             </div>
           </div>
         </div>
