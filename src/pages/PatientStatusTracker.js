@@ -1,4 +1,4 @@
-// src/pages/PatientStatusTracker.js - Fixed with custom status descriptions
+// src/pages/PatientStatusTracker.js - COMPLETE FIXED FILE with working educational resource buttons
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,10 +14,13 @@ import {
   faVideo,
   faHeart,
   faExpand,
-  faTimes
+  faTimes,
+  faExternalLinkAlt,
+  faStar
 } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, getPatientStatusHistory } from '../services/patientService';
 import { getAllStatusOptions } from '../services/statusService';
+import { getResourcesForStatus } from '../services/educationalService';
 import '../styles/PatientStatusTracker.css';
 
 // Default patient journey (fallback for when custom statuses aren't loaded)
@@ -102,6 +105,8 @@ const PatientStatusTracker = () => {
   const [statusHistory, setStatusHistory] = useState([]);
   const [statusOptions, setStatusOptions] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [educationalResources, setEducationalResources] = useState({});
+  const [loadingResources, setLoadingResources] = useState(true);
   
   useEffect(() => {
     const loadPatient = async () => {
@@ -130,6 +135,9 @@ const PatientStatusTracker = () => {
         }
         
         setStatusHistory(updatedHistory);
+
+        // Load educational resources for each status in the history
+        await loadEducationalResources(updatedHistory, statusOpts);
       } catch (error) {
         console.error('Error loading patient:', error);
         setError('Could not find pet information. Please check the link or contact the clinic.');
@@ -147,6 +155,35 @@ const PatientStatusTracker = () => {
     
     return () => clearInterval(refreshInterval);
   }, [id]);
+
+  // NEW: Load educational resources for each status
+  const loadEducationalResources = async (historyEntries, statusOpts) => {
+    try {
+      setLoadingResources(true);
+      const resourcesMap = {};
+      
+      // Get unique statuses from history
+      const uniqueStatuses = [...new Set(historyEntries.map(entry => entry.title))];
+      
+      // Load resources for each status
+      for (const status of uniqueStatuses) {
+        try {
+          const resources = await getResourcesForStatus(status);
+          if (resources && resources.length > 0) {
+            resourcesMap[status] = resources;
+          }
+        } catch (error) {
+          console.warn(`No resources found for status: ${status}`, error);
+        }
+      }
+      
+      setEducationalResources(resourcesMap);
+    } catch (error) {
+      console.error('Error loading educational resources:', error);
+    } finally {
+      setLoadingResources(false);
+    }
+  };
   
   // FIXED: Helper function that uses custom status descriptions
   const getStatusDescription = (status, statusOptionsArray = statusOptions) => {
@@ -226,6 +263,103 @@ const PatientStatusTracker = () => {
   // Close photo modal
   const closePhotoModal = () => {
     setSelectedPhoto(null);
+  };
+
+  // NEW: Handle educational resource click
+  const handleResourceClick = (resource) => {
+    console.log('Resource clicked:', resource);
+    
+    // Open the resource URL in a new tab
+    window.open(resource.url, '_blank', 'noopener,noreferrer');
+  };
+
+  // NEW: Get resource icon based on type
+  const getResourceIcon = (type) => {
+    switch (type) {
+      case 'youtube':
+        return faVideo;
+      case 'pdf':
+        return faFileAlt;
+      case 'website':
+        return faExternalLinkAlt;
+      default:
+        return faExternalLinkAlt;
+    }
+  };
+
+  // NEW: Get resource button class based on type
+  const getResourceButtonClass = (type) => {
+    switch (type) {
+      case 'youtube':
+        return 'resource-button youtube-button';
+      case 'pdf':
+        return 'resource-button pdf-button';
+      case 'website':
+        return 'resource-button website-button';
+      default:
+        return 'resource-button website-button';
+    }
+  };
+
+  // NEW: Render educational resources for a status
+  const renderEducationalResources = (statusTitle) => {
+    const resources = educationalResources[statusTitle];
+    
+    if (loadingResources) {
+      return (
+        <div className="resources-loading">
+          <FontAwesomeIcon icon={faSpinner} spin />
+          Loading resources...
+        </div>
+      );
+    }
+    
+    if (!resources || resources.length === 0) {
+      return null; // Don't show anything if no resources
+    }
+
+    // Sort resources: featured first, then by link_order
+    const sortedResources = [...resources].sort((a, b) => {
+      if (a.is_featured && !b.is_featured) return -1;
+      if (!a.is_featured && b.is_featured) return 1;
+      return (a.link_order || 0) - (b.link_order || 0);
+    });
+
+    return (
+      <div className="educational-resources">
+        {sortedResources.map((resource, index) => (
+          <button
+            key={resource.id}
+            className={getResourceButtonClass(resource.resource_type)}
+            onClick={() => handleResourceClick(resource)}
+            style={resource.is_featured ? {
+              backgroundColor: '#fff3cd',
+              borderWidth: '3px',
+              fontWeight: '600',
+              boxShadow: '0 2px 6px rgba(255, 193, 7, 0.3)'
+            } : {}}
+            title={resource.description || resource.title}
+          >
+            <FontAwesomeIcon icon={getResourceIcon(resource.resource_type)} />
+            {resource.title}
+            <FontAwesomeIcon icon={faExternalLinkAlt} style={{ opacity: 0.6, marginLeft: '4px', fontSize: '0.8em' }} />
+            {resource.is_featured && (
+              <FontAwesomeIcon 
+                icon={faStar} 
+                className="fa-star"
+                style={{ 
+                  position: 'absolute',
+                  top: '3px',
+                  right: '3px',
+                  fontSize: '0.7em',
+                  color: '#ffc107'
+                }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+    );
   };
   
   if (loading) {
@@ -333,31 +467,8 @@ const PatientStatusTracker = () => {
                     </div>
                   )}
                   
-                  {/* Media and Content */}
-                  <div className="timeline-media">
-                    {update.hasPhoto && update.photos && update.photos.length > 0 && (
-                      <button 
-                        className="media-button photo-button"
-                        onClick={() => handlePhotoClick(update.photos[0].photo_url)}
-                      >
-                        <FontAwesomeIcon icon={faCamera} />
-                        View Photo ({update.photos.length})
-                      </button>
-                    )}
-                    
-                    {update.hasEducationalContent && (
-                      <div className="educational-links">
-                        <button className="media-button educational-button">
-                          <FontAwesomeIcon icon={faFileAlt} />
-                          Learn More
-                        </button>
-                        <button className="media-button video-button">
-                          <FontAwesomeIcon icon={faVideo} />
-                          Watch Video
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  {/* FIXED: Educational Resources with working click handlers */}
+                  {renderEducationalResources(update.title)}
                   
                   {update.status === 'current' && (
                     <div className="current-indicator">
