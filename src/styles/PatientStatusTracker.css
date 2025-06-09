@@ -1,4 +1,4 @@
-/* src/styles/PatientStatusTracker.css - Complete file with educational resources */
+/* src/styles/PatientStatusTracker.css - UPDATED with improved educational resource styling */
 .status-tracker-container {
   display: flex;
   flex-direction: column;
@@ -322,160 +322,155 @@
   background-color: #f5f5f5;
 }
 
-/* Timeline Media */
-.timeline-media {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-/* Educational resources container */
+/* UPDATED: Modern Educational Resources Styling */
 .educational-resources {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
+  margin-top: 12px;
   width: 100%;
 }
 
-/* Resource button base styles */
+/* Base resource button styling - matches page design */
 .resource-button {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  border: 2px solid;
+  gap: 8px;
+  padding: 12px 16px;
+  border: none;
   border-radius: 8px;
   background-color: #f8f9fa;
-  font-size: 0.8rem;
+  color: #495057;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
   position: relative;
-  min-height: 40px;
-  line-height: 1.3;
+  min-height: 44px;
+  line-height: 1.4;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid transparent;
 }
 
 .resource-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background-color: #e9ecef;
 }
 
 .resource-button:active {
   transform: translateY(0);
 }
 
-/* YouTube video button */
+/* YouTube video button - subtle red accent */
 .youtube-button {
-  border-color: #ff0000;
-  color: #ff0000;
+  border-left-color: #ff0000;
 }
 
 .youtube-button:hover {
   background-color: #fff5f5;
-  border-color: #cc0000;
 }
 
-/* PDF document button */
+.youtube-button .fa-video {
+  color: #ff0000;
+}
+
+/* PDF document button - subtle red accent */
 .pdf-button {
-  border-color: #dc3545;
-  color: #dc3545;
+  border-left-color: #dc3545;
 }
 
 .pdf-button:hover {
   background-color: #fdf2f2;
-  border-color: #b02a37;
 }
 
-/* Website/article button */
+.pdf-button .fa-file-alt {
+  color: #dc3545;
+}
+
+/* Website/article button - subtle blue accent */
 .website-button {
-  border-color: #4285f4;
-  color: #4285f4;
+  border-left-color: #4285f4;
 }
 
 .website-button:hover {
   background-color: #f0f4ff;
-  border-color: #3367d6;
 }
 
-/* Featured resource styling */
+.website-button .fa-external-link-alt {
+  color: #4285f4;
+}
+
+/* Featured resource styling - more subtle highlighting */
 .resource-button[style*="background-color: rgb(255, 243, 205)"] {
-  background-color: #fff3cd !important;
-  border-width: 3px;
+  background-color: #fff8e1 !important;
+  border-left-width: 4px;
+  border-left-color: #ffc107 !important;
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+  box-shadow: 0 2px 6px rgba(255, 193, 7, 0.2);
+}
+
+.resource-button[style*="background-color: rgb(255, 243, 205)"]:hover {
+  background-color: #fff3cd !important;
+  box-shadow: 0 3px 10px rgba(255, 193, 7, 0.3);
 }
 
 /* Featured star icon */
 .resource-button .fa-star {
   position: absolute;
-  top: 3px;
-  right: 3px;
+  top: 6px;
+  right: 6px;
   font-size: 0.7em;
   color: #ffc107;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
 }
 
-/* External link icon styling */
+/* External link icon styling - more subtle */
 .resource-button .fa-external-link-alt {
-  opacity: 0.6;
+  opacity: 0.5;
   transition: opacity 0.2s ease;
+  font-size: 0.75em;
+  margin-left: auto;
 }
 
 .resource-button:hover .fa-external-link-alt {
-  opacity: 1;
+  opacity: 0.8;
 }
 
-.media-button {
+/* Resource icon styling */
+.resource-button .fa-video,
+.resource-button .fa-file-alt {
+  font-size: 1em;
+  flex-shrink: 0;
+}
+
+/* Loading state for resources */
+.resources-loading {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  gap: 8px;
+  padding: 12px 16px;
+  color: #6c757d;
+  font-size: 0.875rem;
+  font-style: italic;
   background-color: #f8f9fa;
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin-top: 12px;
 }
 
-.media-button:hover {
-  background-color: #e9ecef;
-  border-color: #ced4da;
-}
-
-.photo-button {
-  border-color: #34a853;
-  color: #34a853;
-}
-
-.photo-button:hover {
-  background-color: #e8f5e8;
-}
-
-.educational-button {
-  border-color: #4285f4;
+.resources-loading .fa-spinner {
+  font-size: 0.875rem;
   color: #4285f4;
 }
 
-.educational-button:hover {
-  background-color: #e8f0fe;
-}
-
-.video-button {
-  border-color: #ea4335;
-  color: #ea4335;
-}
-
-.video-button:hover {
-  background-color: #fce8e6;
-}
-
-.educational-links {
-  display: flex;
-  gap: 8px;
+/* No resources available state */
+.no-resources {
+  color: #6c757d;
+  font-size: 0.875rem;
+  font-style: italic;
+  padding: 8px 0;
+  text-align: center;
 }
 
 .current-indicator {
@@ -485,7 +480,7 @@
   color: #4285f4;
   font-size: 0.75rem;
   font-weight: 500;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 /* Clinic Info */
@@ -560,45 +555,6 @@
   font-weight: 500;
 }
 
-/* Loading state for resources */
-.resources-loading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  color: #666;
-  font-size: 0.8rem;
-  font-style: italic;
-}
-
-.resources-loading .fa-spinner {
-  font-size: 0.7rem;
-}
-
-/* No resources available state */
-.no-resources {
-  color: #999;
-  font-size: 0.8rem;
-  font-style: italic;
-  padding: 4px 0;
-}
-
-/* Resource category indicators */
-.resource-category {
-  position: absolute;
-  top: -6px;
-  left: 8px;
-  background-color: white;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: #666;
-  border: 1px solid #e0e0e0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 /* Accessibility improvements */
 .resource-button:focus {
   outline: 2px solid #4285f4;
@@ -648,18 +604,6 @@
     margin-left: 0;
     margin-top: 4px;
   }
-  
-  .timeline-media {
-    flex-direction: column;
-  }
-  
-  .educational-links {
-    flex-direction: column;
-  }
-  
-  .media-button {
-    justify-content: center;
-  }
 
   .status-photos {
     gap: 6px;
@@ -681,14 +625,19 @@
   }
 
   .educational-resources {
-    flex-direction: column;
+    gap: 6px;
   }
   
   .resource-button {
-    width: 100%;
-    justify-content: center;
-    padding: 12px 16px;
-    font-size: 0.85rem;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    min-height: 40px;
+  }
+  
+  .resource-button .fa-star {
+    top: 4px;
+    right: 4px;
+    font-size: 0.6em;
   }
 }
 
@@ -700,11 +649,6 @@
   .timeline-description {
     font-size: 0.8rem;
   }
-  
-  .media-button {
-    font-size: 0.7rem;
-    padding: 6px 10px;
-  }
 
   .status-photo-thumbnail {
     width: 45px;
@@ -712,21 +656,16 @@
   }
 
   .resource-button {
-    font-size: 0.8rem;
-    padding: 10px 14px;
-  }
-  
-  .resource-button .fa-star {
-    top: 2px;
-    right: 2px;
-    font-size: 0.6em;
+    font-size: 0.75rem;
+    padding: 8px 12px;
   }
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .resource-button {
-    border-width: 3px;
+    border-width: 2px;
+    border-style: solid;
     font-weight: 600;
   }
   
