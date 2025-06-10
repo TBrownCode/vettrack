@@ -1,4 +1,4 @@
-// src/pages/PatientDetail.js - Complete file with educational resource management
+// src/pages/PatientDetail.js - Complete file with management buttons removed
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,9 +18,7 @@ import {
   faTimes, 
   faEllipsisV,
   faCog,
-  faShieldAlt, // Icon for protected statuses
-  faVideo,
-  faLink
+  faShieldAlt // Icon for protected statuses
 } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
 import { getAllStatusOptions } from '../services/statusService';
@@ -31,9 +29,6 @@ import SimpleCameraCapture from '../components/SimpleCameraCapture';
 import QRCodeGenerator from '../components/QRCodeGenerator';
 import SendUpdateForm from '../components/SendUpdateForm';
 import UpdateConfirmation from '../components/UpdateConfirmation';
-import StatusManagement from '../components/StatusManagement';
-import EducationalResourcesManager from '../components/EducationalResourcesManager';
-import StatusResourceLinker from '../components/StatusResourceLinker';
 
 const PatientDetail = () => {
   const { id } = useParams();
@@ -47,9 +42,6 @@ const PatientDetail = () => {
   const [showCamera, setShowCamera] = useState(false);
   const [showSendUpdate, setShowSendUpdate] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showStatusManagement, setShowStatusManagement] = useState(false);
-  const [showEducationalManager, setShowEducationalManager] = useState(false);
-  const [showResourceLinker, setShowResourceLinker] = useState(false);
   const [cameraMode, setCameraMode] = useState('profile');
   const [error, setError] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -333,18 +325,6 @@ const PatientDetail = () => {
     setShowStatusMenu(!showStatusMenu);
   };
 
-  const handleStatusManagementClose = async () => {
-    setShowStatusManagement(false);
-    // Refresh status options after managing them
-    try {
-      const updatedStatusOptions = await getAllStatusOptions();
-      setStatusOptions(updatedStatusOptions);
-      console.log('Refreshed status options after management:', updatedStatusOptions);
-    } catch (error) {
-      console.error('Error reloading status options:', error);
-    }
-  };
-
   // Close status menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -608,30 +588,6 @@ const PatientDetail = () => {
         </button>
         
         <button 
-          className="action-button secondary"
-          onClick={() => setShowStatusManagement(true)}
-        >
-          <FontAwesomeIcon icon={faCog} />
-          Manage Status Options
-        </button>
-        
-        <button 
-          className="action-button secondary"
-          onClick={() => setShowEducationalManager(true)}
-        >
-          <FontAwesomeIcon icon={faVideo} />
-          Manage Educational Resources
-        </button>
-        
-        <button 
-          className="action-button secondary"
-          onClick={() => setShowResourceLinker(true)}
-        >
-          <FontAwesomeIcon icon={faLink} />
-          Link Resources to Statuses
-        </button>
-        
-        <button 
           className="action-button danger"
           onClick={handleDeletePatient}
         >
@@ -695,18 +651,6 @@ const PatientDetail = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {showStatusManagement && (
-        <StatusManagement onClose={handleStatusManagementClose} />
-      )}
-
-      {showEducationalManager && (
-        <EducationalResourcesManager onClose={() => setShowEducationalManager(false)} />
-      )}
-      
-      {showResourceLinker && (
-        <StatusResourceLinker onClose={() => setShowResourceLinker(false)} />
       )}
     </div>
   );
