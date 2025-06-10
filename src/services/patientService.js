@@ -1,8 +1,8 @@
-// src/services/patientService.js - Complete file with all functions including status photos
+// src/services/patientService.js - Complete file with minimal soft delete changes
 import { supabase } from '../lib/supabase';
 import { uploadPhotoFromDataURL } from './photoService';
 
-// Get all patients
+// Get all patients (only non-deleted for staff) - UPDATED
 export const getPatients = async () => {
   try {
     const { data, error } = await supabase
@@ -11,6 +11,7 @@ export const getPatients = async () => {
         *,
         clinic:clinics(name)
       `)
+      .eq('is_deleted', false) // Only show non-deleted patients to staff
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -34,7 +35,7 @@ export const getPatients = async () => {
   }
 };
 
-// Get patient by ID
+// Get patient by ID (staff - only non-deleted)
 export const getPatientById = async (id) => {
   try {
     const { data, error } = await supabase
@@ -68,6 +69,51 @@ export const getPatientById = async (id) => {
   }
 };
 
+// NEW: Get patient by ID for owners (allows viewing during grace period)
+export const getPatientByIdForOwner = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .select(`
+        *,
+        clinic:clinics(name)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    if (!data) throw new Error(`Patient with ID ${id} not found`);
+
+    // Check if patient is in grace period
+    const now = new Date();
+    const deletionExpires = data.deletion_expires_at ? new Date(data.deletion_expires_at) : null;
+    const isInGracePeriod = data.is_deleted && deletionExpires && deletionExpires > now;
+    const timeRemaining = isInGracePeriod ? Math.ceil((deletionExpires - now) / (1000 * 60 * 60)) : 0;
+
+    // Transform data to match your existing format
+    return {
+      id: data.id,
+      name: data.name,
+      species: data.species,
+      breed: data.breed || '',
+      owner: data.owner_name,
+      phone: data.owner_phone,
+      email: data.owner_email,
+      status: data.status,
+      photoUrl: data.photo_url,
+      lastUpdate: new Date(data.updated_at).toLocaleTimeString(),
+      isDeleted: data.is_deleted,
+      deletedAt: data.deleted_at,
+      deletionExpiresAt: data.deletion_expires_at,
+      isInGracePeriod,
+      timeRemaining
+    };
+  } catch (error) {
+    console.error('Error fetching patient for owner:', error);
+    throw error;
+  }
+};
+
 // Get patient status history with photos
 export const getPatientStatusHistory = async (patientId) => {
   try {
@@ -95,7 +141,7 @@ export const getPatientStatusHistory = async (patientId) => {
       date: new Date(entry.changed_at).toLocaleDateString(),
       status: 'completed',
       hasPhoto: entry.status_photos && entry.status_photos.length > 0,
-      photos: entry.status_photos || [], // Include photos in the timeline
+      photos: entry.status_photos || [],
       hasEducationalContent: true,
       changedBy: entry.changed_by
     }));
@@ -170,7 +216,7 @@ export const updatePatientStatus = async (id, newStatus) => {
   }
 };
 
-// NEW: Add photo to a specific status
+// Add photo to a specific status
 export const addStatusPhoto = async (patientId, status, photoData) => {
   try {
     // Upload photo to storage
@@ -217,7 +263,7 @@ export const addStatusPhoto = async (patientId, status, photoData) => {
   }
 };
 
-// NEW: Delete all photos from a specific status
+// Delete all photos from a specific status
 export const deleteStatusPhotos = async (patientId, status) => {
   try {
     // Get all photos for this patient's current status
@@ -235,10 +281,6 @@ export const deleteStatusPhotos = async (patientId, status) => {
         message: `No photos found for status "${status}"`
       };
     }
-
-    // Delete photos from storage (optional - you might want to keep them for backup)
-    // Note: You would need to extract the file path from the URL and delete from storage
-    // For now, we'll just delete the database records
 
     // Delete all photo records from the database
     const { error: deleteError } = await supabase
@@ -333,16 +375,25 @@ export const addPatient = async (patientData) => {
   }
 };
 
-// Delete patient
+// UPDATED: Soft delete patient with 24-hour grace period
 export const deletePatient = async (id) => {
   try {
+    // Soft delete: mark as deleted with 24-hour grace period
     const { error } = await supabase
       .from('patients')
-      .delete()
+      .update({
+        is_deleted: true,
+        deleted_at: new Date().toISOString(),
+        deletion_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      })
       .eq('id', id);
 
     if (error) throw error;
-    return { success: true, message: 'Patient deleted successfully' };
+    
+    return { 
+      success: true, 
+      message: 'Patient deleted successfully' 
+    };
   } catch (error) {
     console.error('Error deleting patient:', error);
     throw error;

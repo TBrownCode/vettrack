@@ -1,4 +1,4 @@
-// src/pages/PatientStatusTracker.js - COMPLETE FILE with updated error message
+// src/pages/PatientStatusTracker.js - Complete file with minimal grace period changes
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,9 +16,11 @@ import {
   faExpand,
   faTimes,
   faExternalLinkAlt,
-  faStar
+  faStar,
+  faExclamationTriangle,
+  faInfoCircle
 } from '@fortawesome/free-solid-svg-icons';
-import { getPatientById, getPatientStatusHistory } from '../services/patientService';
+import { getPatientByIdForOwner, getPatientStatusHistory } from '../services/patientService'; // UPDATED: Changed import
 import { getAllStatusOptions } from '../services/statusService';
 import { getResourcesForStatus } from '../services/educationalService';
 import '../styles/PatientStatusTracker.css';
@@ -30,70 +32,70 @@ const PATIENT_JOURNEY = [
     title: 'Admitted',
     description: 'Your pet has arrived and is being settled in',
     icon: faHeart,
-    color: '#4285f4'  // Blue
+    color: '#4285f4'
   },
   {
     id: 'being-examined',
     title: 'Being Examined',
     description: 'Initial examination and assessment',
     icon: faHeart,
-    color: '#ea4335'  // Red - CORRECTED
+    color: '#ea4335'
   },
   {
     id: 'awaiting-tests',
     title: 'Awaiting Tests',
     description: 'Waiting for diagnostic tests or results',
     icon: faHourglassHalf,
-    color: '#fbbc05'  // Yellow
+    color: '#fbbc05'
   },
   {
     id: 'test-results-pending',
     title: 'Test Results Pending',
     description: 'Tests completed, waiting for results',
     icon: faHourglassHalf,
-    color: '#fbbc05'  // Yellow
+    color: '#fbbc05'
   },
   {
     id: 'being-prepped-for-surgery',
     title: 'Being Prepped for Surgery',
     description: 'Preparing for the surgical procedure',
     icon: faHeart,
-    color: '#fa903e'  // Orange
+    color: '#fa903e'
   },
   {
     id: 'in-surgery',
     title: 'In Surgery',
     description: 'Surgical procedure in progress',
     icon: faHeart,
-    color: '#ea4335'  // Red - CORRECTED from orange
+    color: '#ea4335'
   },
   {
     id: 'in-recovery',
     title: 'In Recovery',
     description: 'Surgery complete, recovering comfortably',
     icon: faHeart,
-    color: '#34a853'  // Green
+    color: '#34a853'
   },
   {
     id: 'awake-responsive',
     title: 'Awake & Responsive',
     description: 'Alert and responding well to treatment',
     icon: faHeart,
-    color: '#34a853'  // Green
+    color: '#34a853'
   },
   {
     id: 'ready-for-discharge',
     title: 'Ready for Discharge',
     description: 'All set to go home!',
     icon: faHeart,
-    color: '#a142f4'  // Purple
+    color: '#a142f4'
   },
   {
     id: 'discharged',
     title: 'Discharged',
     description: 'Successfully discharged and on the way home',
     icon: faCheck,
-    color: '#a142f4'  // Purple
+    color: '#a142f4'
   }
 ];
 
@@ -111,9 +113,9 @@ const PatientStatusTracker = () => {
   useEffect(() => {
     const loadPatient = async () => {
       try {
-        // Load patient data AND status options for custom status support
+        // UPDATED: Use getPatientByIdForOwner to allow grace period access
         const [patientData, statusOpts] = await Promise.all([
-          getPatientById(id),
+          getPatientByIdForOwner(id), // CHANGED: This allows access during grace period
           getAllStatusOptions()
         ]);
         
@@ -123,14 +125,14 @@ const PatientStatusTracker = () => {
         // Load real status history from database
         const history = await getPatientStatusHistory(id);
         
-        // FIXED: Update descriptions with custom status descriptions
+        // Update descriptions with custom status descriptions
         const updatedHistory = history.map(entry => ({
           ...entry,
           description: getStatusDescription(entry.title, statusOpts)
         }));
         
-        // Mark the most recent entry as current
-        if (updatedHistory.length > 0) {
+        // Mark the most recent entry as current (unless patient is deleted)
+        if (updatedHistory.length > 0 && !patientData.isDeleted) {
           updatedHistory[0].status = 'current';
         }
         
@@ -148,7 +150,7 @@ const PatientStatusTracker = () => {
 
     loadPatient();
     
-    // Set up auto-refresh every minute
+    // Set up auto-refresh every minute (only if not in grace period)
     const refreshInterval = setInterval(() => {
       loadPatient();
     }, 60000);
@@ -156,7 +158,7 @@ const PatientStatusTracker = () => {
     return () => clearInterval(refreshInterval);
   }, [id]);
 
-  // NEW: Load educational resources for each status
+  // Load educational resources for each status
   const loadEducationalResources = async (historyEntries, statusOpts) => {
     try {
       setLoadingResources(true);
@@ -185,7 +187,7 @@ const PatientStatusTracker = () => {
     }
   };
   
-  // FIXED: Helper function that uses custom status descriptions
+  // Helper function that uses custom status descriptions
   const getStatusDescription = (status, statusOptionsArray = statusOptions) => {
     // First try to find custom status description
     const customStatus = statusOptionsArray.find(
@@ -213,7 +215,7 @@ const PatientStatusTracker = () => {
     return descriptions[status] || 'Status updated';
   };
   
-  // UPDATED: Get current step info with custom status support AND description
+  // Get current step info with custom status support AND description
   const getCurrentStepInfo = () => {
     // First try to find in loaded status options (includes custom statuses)
     const customStatus = statusOptions.find(
@@ -235,7 +237,7 @@ const PatientStatusTracker = () => {
     ) || PATIENT_JOURNEY[0];
   };
 
-  // UPDATED: Get step info for timeline items with custom status support
+  // Get step info for timeline items with custom status support
   const getStepInfo = (statusTitle) => {
     // First try to find in loaded status options (includes custom statuses)
     const customStatus = statusOptions.find(
@@ -265,7 +267,7 @@ const PatientStatusTracker = () => {
     setSelectedPhoto(null);
   };
 
-  // NEW: Handle educational resource click
+  // Handle educational resource click
   const handleResourceClick = (resource) => {
     console.log('Resource clicked:', resource);
     
@@ -273,7 +275,7 @@ const PatientStatusTracker = () => {
     window.open(resource.url, '_blank', 'noopener,noreferrer');
   };
 
-  // NEW: Get resource icon based on type
+  // Get resource icon based on type
   const getResourceIcon = (type) => {
     switch (type) {
       case 'youtube':
@@ -287,7 +289,7 @@ const PatientStatusTracker = () => {
     }
   };
 
-  // NEW: Get resource button class based on type
+  // Get resource button class based on type
   const getResourceButtonClass = (type) => {
     switch (type) {
       case 'youtube':
@@ -301,7 +303,7 @@ const PatientStatusTracker = () => {
     }
   };
 
-  // NEW: Render educational resources for a status
+  // Render educational resources for a status
   const renderEducationalResources = (statusTitle) => {
     const resources = educationalResources[statusTitle];
     
@@ -361,6 +363,36 @@ const PatientStatusTracker = () => {
       </div>
     );
   };
+
+  // NEW: Render grace period banner
+  const renderGracePeriodBanner = () => {
+    if (!patient?.isInGracePeriod) return null;
+
+    return (
+      <div style={{
+        backgroundColor: '#fff3cd',
+        border: '1px solid #ffeaa7',
+        borderRadius: '8px',
+        padding: '16px',
+        margin: '16px 0',
+        textAlign: 'center'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+          <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: '#856404' }} />
+          <h3 style={{ margin: 0, color: '#856404', fontSize: '1.1rem' }}>
+            Visit Completed
+          </h3>
+        </div>
+        <p style={{ margin: '0 0 8px 0', color: '#856404', fontSize: '0.9rem' }}>
+          {patient.name}'s visit with us has been completed. This timeline will remain 
+          available for <strong>{patient.timeRemaining} more hours</strong>.
+        </p>
+        <p style={{ margin: 0, color: '#856404', fontSize: '0.8rem' }}>
+          Save any important information or photos you'd like to keep.
+        </p>
+      </div>
+    );
+  };
   
   if (loading) {
     return (
@@ -376,15 +408,40 @@ const PatientStatusTracker = () => {
   if (error || !patient) {
     return (
       <div className="status-tracker-container error-state">
-        <div className="error-message" style={{ backgroundColor: '#e3f2fd', border: '1px solid #bbdefb', color: '#1976d2' }}>
+        <div className="error-message">
           <FontAwesomeIcon icon={faPaw} />
+          <h2>Pet Not Found</h2>
+          <p>{error}</p>
+          <Link to="/" className="home-link">Go to Home</Link>
+        </div>
+      </div>
+    );
+  }
+
+  // NEW: Check if patient is permanently deleted (grace period expired)
+  if (patient.isDeleted && !patient.isInGracePeriod) {
+    return (
+      <div className="status-tracker-container error-state">
+        <div className="error-message">
+          <FontAwesomeIcon icon={faPaw} style={{ color: '#4285f4', fontSize: '3rem', marginBottom: '16px' }} />
           <h2>Your Pet Is Not Currently Being Tracked</h2>
-          <p style={{ color: '#1976d2' }}>Your pet's visit with us has been completed, or the tracking link may be outdated.</p>
-          <p style={{ color: '#1976d2' }}>If you believe this is an error, please contact the clinic directly.</p>
-          <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#e3f2fd', borderRadius: '8px', fontSize: '14px', border: '1px solid #bbdefb' }}>
-            <p style={{ margin: '0 0 8px 0', fontWeight: '500', color: '#1976d2' }}>Need help?</p>
-            <p style={{ margin: '0 0 4px 0', color: '#1976d2' }}>📞 Phone: (555) 123-4567</p>
-            <p style={{ margin: 0, color: '#1976d2' }}>📧 Email: info@vetclinic.com</p>
+          <p>Your pet's visit with us has been completed, or the tracking link may be outdated.</p>
+          <p>If you believe this is an error, please contact the clinic directly.</p>
+          
+          <div style={{
+            marginTop: '24px',
+            padding: '16px',
+            backgroundColor: '#e8f0fe',
+            borderRadius: '8px',
+            textAlign: 'center'
+          }}>
+            <h4 style={{ margin: '0 0 8px 0', color: '#4285f4' }}>Need help?</h4>
+            <p style={{ margin: '4px 0', color: '#4285f4' }}>
+              📞 Phone: (555) 123-4567
+            </p>
+            <p style={{ margin: '4px 0', color: '#4285f4' }}>
+              📧 Email: info@vetclinic.com
+            </p>
           </div>
         </div>
       </div>
@@ -398,6 +455,9 @@ const PatientStatusTracker = () => {
       <header className="tracker-header">
         <h1><FontAwesomeIcon icon={faPaw} /> VetTrack</h1>
       </header>
+      
+      {/* NEW: Grace Period Banner */}
+      {renderGracePeriodBanner()}
       
       {/* Pet Info Card */}
       <div className="pet-status-card">
@@ -438,7 +498,7 @@ const PatientStatusTracker = () => {
               <div key={update.id} className={`timeline-item ${update.status}`}>
                 <div className="timeline-marker">
                   <FontAwesomeIcon 
-                    icon={update.status === 'current' ? faClock : faCheck} 
+                    icon={update.status === 'current' && !patient.isDeleted ? faClock : faCheck} 
                     style={{ color: stepInfo.color }}
                   />
                 </div>
@@ -472,10 +532,10 @@ const PatientStatusTracker = () => {
                     </div>
                   )}
                   
-                  {/* FIXED: Educational Resources with working click handlers */}
+                  {/* Educational Resources */}
                   {renderEducationalResources(update.title)}
                   
-                  {update.status === 'current' && (
+                  {update.status === 'current' && !patient.isDeleted && (
                     <div className="current-indicator">
                       <FontAwesomeIcon icon={faClock} />
                       Currently here
@@ -497,9 +557,12 @@ const PatientStatusTracker = () => {
         <p className="contact">Email: info@vetclinic.com</p>
       </div>
       
-      <div className="refresh-note">
-        <p>This page automatically refreshes to show the latest information.</p>
-      </div>
+      {/* Refresh note - only show if not in grace period */}
+      {!patient.isInGracePeriod && (
+        <div className="refresh-note">
+          <p>This page automatically refreshes to show the latest information.</p>
+        </div>
+      )}
       
       {/* Photo Modal */}
       {selectedPhoto && (
