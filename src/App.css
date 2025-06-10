@@ -33,7 +33,9 @@ body {
   background-color: var(--primary-color);
   color: white;
   padding: 1rem;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* NEW: Clickable logo styles */
@@ -42,6 +44,7 @@ body {
   text-decoration: none;
   transition: opacity 0.2s ease;
   display: inline-block;
+  flex: 1;
 }
 
 .header-logo-link:hover {
@@ -58,6 +61,7 @@ body {
   margin: 0;
   cursor: pointer;
   user-select: none; /* Prevent text selection on click */
+  text-align: left;
 }
 
 main {
