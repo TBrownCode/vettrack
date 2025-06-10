@@ -6,7 +6,7 @@
   right: 0;
   bottom: 0;
   background-color: var(--surface-color);
-  z-index: 100;
+  z-index: 1001; /* Higher than header dropdown (1000) */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -21,7 +21,7 @@
   color: white;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 101; /* Higher than header dropdown */
 }
 
 .form-header h2 {
@@ -36,6 +36,8 @@
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
+  z-index: 102; /* Ensure it's above everything */
+  position: relative;
 }
 
 .patient-form {
@@ -127,6 +129,21 @@
 .error-message {
   color: var(--error-color);
   font-size: 0.75rem;
+}
+
+.status-info {
+  background-color: #e8f0fe;
+  border: 1px solid #c3d7ff;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 8px;
+}
+
+.status-info p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #1a73e8;
+  line-height: 1.4;
 }
 
 .form-buttons {

@@ -1,4 +1,4 @@
-// src/components/NewPatientForm.js - Updated with cancel button moved below
+// src/components/NewPatientForm.js - Updated with automatic "Admitted" status and fixed overlap issue
 import React, { useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -13,7 +13,7 @@ const NewPatientForm = ({ onSave, onCancel }) => {
     owner: '',
     phone: '',
     email: '',
-    status: 'Admitted',
+    status: 'Admitted', // Always default to Admitted
     photoUrl: null
   });
   
@@ -244,17 +244,12 @@ const NewPatientForm = ({ onSave, onCancel }) => {
         </div>
         
         <div className="form-row">
-          <label htmlFor="status">Initial Status</label>
-          <select
-            id="status"
-            name="status"
-            value={patient.status}
-            onChange={handleInputChange}
-          >
-            <option value="Admitted">Admitted</option>
-            <option value="Being Examined">Being Examined</option>
-            <option value="Awaiting Tests">Awaiting Tests</option>
-          </select>
+          <div className="status-info">
+            <p>
+              <strong>Initial Status:</strong> All patients automatically start as "Admitted" 
+              and can be updated after creation.
+            </p>
+          </div>
         </div>
         
         <div className="form-buttons">
