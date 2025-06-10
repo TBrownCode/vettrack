@@ -1,4 +1,4 @@
-// src/pages/PatientStatusTracker.js - COMPLETE FIXED FILE with working educational resource buttons
+// src/pages/PatientStatusTracker.js - COMPLETE FILE with updated error message
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -376,11 +376,16 @@ const PatientStatusTracker = () => {
   if (error || !patient) {
     return (
       <div className="status-tracker-container error-state">
-        <div className="error-message">
+        <div className="error-message" style={{ backgroundColor: '#e3f2fd', border: '1px solid #bbdefb', color: '#1976d2' }}>
           <FontAwesomeIcon icon={faPaw} />
-          <h2>Pet Not Found</h2>
-          <p>{error}</p>
-          <Link to="/" className="home-link">Go to Home</Link>
+          <h2>Your Pet Is Not Currently Being Tracked</h2>
+          <p style={{ color: '#1976d2' }}>Your pet's visit with us has been completed, or the tracking link may be outdated.</p>
+          <p style={{ color: '#1976d2' }}>If you believe this is an error, please contact the clinic directly.</p>
+          <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#e3f2fd', borderRadius: '8px', fontSize: '14px', border: '1px solid #bbdefb' }}>
+            <p style={{ margin: '0 0 8px 0', fontWeight: '500', color: '#1976d2' }}>Need help?</p>
+            <p style={{ margin: '0 0 4px 0', color: '#1976d2' }}>📞 Phone: (555) 123-4567</p>
+            <p style={{ margin: 0, color: '#1976d2' }}>📧 Email: info@vetclinic.com</p>
+          </div>
         </div>
       </div>
     );
