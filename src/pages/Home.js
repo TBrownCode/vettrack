@@ -1,4 +1,4 @@
-// In src/pages/Home.js
+// src/pages/Home.js - Updated to remove user header since it's now in App.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,7 +6,6 @@ import { faSearch, faQrcode, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PatientCard from '../components/PatientCard';
 import NewPatientForm from '../components/NewPatientForm';
 import QRCodeScanner from '../components/QRCodeScanner';
-import UserManagement from '../components/UserManagement'; // Add this import
 import { getPatients, addPatient, deletePatient } from '../services/patientService';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/Home.css';
@@ -17,11 +16,9 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showUserManagement, setShowUserManagement] = useState(false); // Add this state
   const navigate = useNavigate();
   
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     // Fetch patients
@@ -38,18 +35,6 @@ const Home = () => {
 
     loadPatients();
   }, []);
-
-  // Add this useEffect for click outside to close menu
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showUserMenu && !event.target.closest('.user-menu-container')) {
-        setShowUserMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showUserMenu]);
 
   // Filter patients based on search query
   const filteredPatients = patients.filter(patient => 
@@ -76,7 +61,7 @@ const Home = () => {
     }
   };
 
-  // Add this delete handler function
+  // Delete handler function
   const handleDeletePatient = async (id) => {
     try {
       setLoading(true);
@@ -92,74 +77,16 @@ const Home = () => {
     }
   };
 
-  // Add this handler for QR scanning
+  // QR scanning handler
   const handleScanSuccess = (patientId) => {
     // Navigate to patient details
     navigate(`/patient/${patientId}`);
     setShowScanner(false);
   };
 
-  // Add this logout handler
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      // Navigation will happen automatically via AuthContext
-    } catch (error) {
-      console.error('Error signing out:', error);
-      alert('Error signing out');
-    }
-  };
-
   return (
     <div className="home-container">
-      {/* Add user menu header */}
-      <div className="user-header">
-        <div className="user-info">
-          <span className="welcome-text">Welcome, {user?.user_metadata?.full_name || user?.email}</span>
-          <span className="user-role">{user?.user_metadata?.role || 'Staff'}</span>
-        </div>
-        <div className="user-menu-container">
-          <button 
-            className="user-menu-button"
-            onClick={() => setShowUserMenu(!showUserMenu)}
-          >
-            <div className="user-avatar">
-              {(user?.user_metadata?.full_name || user?.email)?.charAt(0).toUpperCase()}
-            </div>
-          </button>
-          
-          {showUserMenu && (
-            <div className="user-menu-dropdown">
-              <div className="user-menu-item user-details">
-                <strong>{user?.user_metadata?.full_name || 'Staff Member'}</strong>
-                <small>{user?.email}</small>
-              </div>
-              <hr className="user-menu-divider" />
-              
-              {/* Add this section for admin users */}
-              {user?.user_metadata?.role === 'admin' && (
-                <>
-                  <button 
-                    className="user-menu-item" 
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      setShowUserManagement(true);
-                    }}
-                  >
-                    Manage Users
-                  </button>
-                  <hr className="user-menu-divider" />
-                </>
-              )}
-              
-              <button className="user-menu-item" onClick={handleLogout}>
-                Sign Out
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
+      {/* Search Section */}
       <div className="search-container">
         <div className="search-input-wrapper">
           <FontAwesomeIcon icon={faSearch} className="search-icon" />
@@ -173,6 +100,7 @@ const Home = () => {
         </div>
       </div>
 
+      {/* Patients List */}
       <div className="patients-list">
         {loading ? (
           <div className="loading">Loading patients...</div>
@@ -190,7 +118,7 @@ const Home = () => {
         )}
       </div>
 
-      {/* Scan QR button - updated to open scanner directly */}
+      {/* Scan QR button */}
       <button 
         className="scan-button" 
         onClick={() => setShowScanner(true)}
@@ -233,17 +161,12 @@ const Home = () => {
         />
       )}
       
-      {/* Add QR code scanner */}
+      {/* QR code scanner */}
       {showScanner && (
         <QRCodeScanner 
           onScan={handleScanSuccess}
           onClose={() => setShowScanner(false)}
         />
-      )}
-      
-      {/* Add user management component */}
-      {showUserManagement && (
-        <UserManagement onClose={() => setShowUserManagement(false)} />
       )}
     </div>
   );

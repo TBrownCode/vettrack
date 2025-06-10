@@ -1,14 +1,33 @@
-// src/App.js - Updated with clickable logo navigation
-import React from 'react';
+// src/App.js - Updated with Header Dropdown Menu
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faBars, 
+  faTimes, 
+  faUser, 
+  faSignOutAlt, 
+  faCog, 
+  faVideo, 
+  faLink,
+  faUserPlus
+} from '@fortawesome/free-solid-svg-icons';
 import './App.css';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import PatientDetail from './pages/PatientDetail';
 import PatientStatusTracker from './pages/PatientStatusTracker';
+import HeaderDropdownMenu from './components/HeaderDropdownMenu';
+import StatusManagement from './components/StatusManagement';
+import EducationalResourcesManager from './components/EducationalResourcesManager';
+import StatusResourceLinker from './components/StatusResourceLinker';
 
 function App() {
+  const [showStatusManagement, setShowStatusManagement] = useState(false);
+  const [showEducationalManager, setShowEducationalManager] = useState(false);
+  const [showResourceLinker, setShowResourceLinker] = useState(false);
+
   return (
     <AuthProvider>
       <Router>
@@ -24,6 +43,13 @@ function App() {
                   <Link to="/" className="header-logo-link">
                     <h1>VetTrack</h1>
                   </Link>
+                  
+                  {/* NEW: Header Dropdown Menu */}
+                  <HeaderDropdownMenu
+                    onStatusManagement={() => setShowStatusManagement(true)}
+                    onEducationalManager={() => setShowEducationalManager(true)}
+                    onResourceLinker={() => setShowResourceLinker(true)}
+                  />
                 </header>
                 <main>
                   <Home />
@@ -40,6 +66,13 @@ function App() {
                   <Link to="/" className="header-logo-link">
                     <h1>VetTrack</h1>
                   </Link>
+                  
+                  {/* NEW: Header Dropdown Menu */}
+                  <HeaderDropdownMenu
+                    onStatusManagement={() => setShowStatusManagement(true)}
+                    onEducationalManager={() => setShowEducationalManager(true)}
+                    onResourceLinker={() => setShowResourceLinker(true)}
+                  />
                 </header>
                 <main>
                   <PatientDetail />
@@ -50,6 +83,19 @@ function App() {
               </ProtectedRoute>
             } />
           </Routes>
+          
+          {/* Management Modals */}
+          {showStatusManagement && (
+            <StatusManagement onClose={() => setShowStatusManagement(false)} />
+          )}
+          
+          {showEducationalManager && (
+            <EducationalResourcesManager onClose={() => setShowEducationalManager(false)} />
+          )}
+          
+          {showResourceLinker && (
+            <StatusResourceLinker onClose={() => setShowResourceLinker(false)} />
+          )}
         </div>
       </Router>
     </AuthProvider>
