@@ -27,7 +27,13 @@ const SoftDeletedPatients = ({ onClose }) => {
 
   // Toast and confirmation
   const { toasts, showSuccess, showError, hideToast } = useToast();
-  const { confirmation, handleConfirm, handleCancel, confirmDelete } = useConfirmation();
+  const { 
+    confirmation, 
+    handleConfirm, 
+    handleCancel, 
+    confirmDelete,
+    showConfirmation 
+  } = useConfirmation();
 
   useEffect(() => {
     loadSoftDeletedPatients();
@@ -92,10 +98,13 @@ const SoftDeletedPatients = ({ onClose }) => {
   };
 
   const handleRestorePatient = (patientId, patientName) => {
-    confirmDelete(
-      'Restore Patient',
-      `Restore "${patientName}" back to the active patient list?`,
-      async () => {
+    showConfirmation({
+      title: 'Restore Patient',
+      message: `Restore "${patientName}" back to the active patient list?`,
+      confirmText: 'Restore',
+      cancelText: 'Cancel',
+      type: 'info', // Changed from 'danger' to 'info' for blue/green styling
+      onConfirm: async () => {
         try {
           const { error } = await supabase
             .from('patients')
@@ -114,8 +123,11 @@ const SoftDeletedPatients = ({ onClose }) => {
           console.error('Error restoring patient:', error);
           showError('Failed to restore patient');
         }
+      },
+      onCancel: () => {
+        // Just close the dialog
       }
-    );
+    });
   };
 
   const handlePermanentDelete = (patientId, patientName) => {
