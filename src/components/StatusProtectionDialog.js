@@ -1,4 +1,4 @@
-// src/components/StatusProtectionDialog.js - Complete file with all protection types
+// src/components/StatusProtectionDialog.js - FIXED version with consistent delay protection
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -23,26 +23,43 @@ const StatusProtectionDialog = ({
   const [isDelayComplete, setIsDelayComplete] = useState(false);
   const [hasConfirmedFirst, setHasConfirmedFirst] = useState(false);
 
-  // Reset states when dialog opens
+  // FIXED: Reset states when dialog opens and ensure delay starts properly
   useEffect(() => {
     if (isOpen) {
       setCountdown(5);
       setIsDelayComplete(false);
       setHasConfirmedFirst(false);
+      
+      // FIXED: For delay protection, explicitly set delay as incomplete
+      if (protectionType === 'delay') {
+        setIsDelayComplete(false);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, protectionType]); // Added protectionType as dependency
 
-  // Countdown timer for delay protection
+  // FIXED: Countdown timer with proper cleanup and state management
   useEffect(() => {
-    if (isOpen && protectionType === 'delay' && countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown(prev => prev - 1);
+    let timer = null;
+    
+    if (isOpen && protectionType === 'delay' && countdown > 0 && !isDelayComplete) {
+      timer = setTimeout(() => {
+        setCountdown(prev => {
+          const newCount = prev - 1;
+          if (newCount <= 0) {
+            setIsDelayComplete(true);
+            return 0;
+          }
+          return newCount;
+        });
       }, 1000);
-      return () => clearTimeout(timer);
-    } else if (countdown === 0) {
-      setIsDelayComplete(true);
     }
-  }, [isOpen, protectionType, countdown]);
+    
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [isOpen, protectionType, countdown, isDelayComplete]);
 
   if (!isOpen) return null;
 
@@ -94,6 +111,7 @@ const StatusProtectionDialog = ({
     onConfirm();
   };
 
+  // FIXED: Delay protection with proper button state management
   const renderDelayProtection = () => (
     <div style={{
       backgroundColor: 'white',
@@ -147,7 +165,8 @@ const StatusProtectionDialog = ({
           {config.warningText}
         </p>
         
-        {countdown > 0 ? (
+        {/* FIXED: Countdown logic - only show countdown if delay is NOT complete */}
+        {!isDelayComplete && countdown > 0 ? (
           <div style={{
             padding: '16px',
             backgroundColor: '#fff3cd',
@@ -207,6 +226,7 @@ const StatusProtectionDialog = ({
             Cancel Change
           </button>
           
+          {/* FIXED: Only show Apply button when delay is actually complete */}
           {isDelayComplete && (
             <button
               onClick={handleFinalConfirm}
