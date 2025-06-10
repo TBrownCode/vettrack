@@ -1,5 +1,5 @@
-// src/components/EducationalResourcesManager.js - Mobile-Optimized Version
-import React, { useState, useEffect } from 'react';
+// src/components/EducationalResourcesManager.js - Enhanced with PDF Upload
+import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faPlus, 
@@ -13,9 +13,13 @@ import {
   faEyeSlash,
   faLink,
   faSave,
-  faSearch
+  faSearch,
+  faUpload,
+  faSpinner,
+  faCheckCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../lib/supabase';
+import { uploadPDF, validatePDFFile, formatFileSize } from '../services/pdfUploadService';
 import { useToast } from '../hooks/useToast';
 import { useConfirmation } from '../hooks/useConfirmation';
 import { ToastContainer } from './Toast';
@@ -30,6 +34,12 @@ const EducationalResourcesManager = ({ onClose }) => {
   const [filterType, setFilterType] = useState('all');
   const [error, setError] = useState('');
 
+  // PDF Upload states
+  const [uploadingPDF, setUploadingPDF] = useState(false);
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfUploadProgress, setPdfUploadProgress] = useState(0);
+  const fileInputRef = useRef(null);
+
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -37,7 +47,8 @@ const EducationalResourcesManager = ({ onClose }) => {
     url: '',
     resource_type: 'youtube',
     category: '',
-    thumbnail_url: ''
+    thumbnail_url: '',
+    upload_method: 'url' // 'url' or 'upload'
   });
 
   // Toast and confirmation
@@ -85,17 +96,58 @@ const EducationalResourcesManager = ({ onClose }) => {
       url: '',
       resource_type: 'youtube',
       category: '',
-      thumbnail_url: ''
+      thumbnail_url: '',
+      upload_method: 'url'
     });
+    setPdfFile(null);
+    setPdfUploadProgress(0);
     setError('');
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validation = validatePDFFile(file);
+    if (!validation.isValid) {
+      setError(validation.error);
+      showError(validation.error);
+      return;
+    }
+
+    setPdfFile(file);
+    setError('');
+    
+    // Auto-fill title if empty
+    if (!formData.title) {
+      const nameWithoutExtension = file.name.replace('.pdf', '');
+      setFormData(prev => ({ 
+        ...prev, 
+        title: nameWithoutExtension,
+        resource_type: 'pdf'
+      }));
+    }
   };
 
   const handleAddResource = async (e) => {
     e.preventDefault();
     
-    if (!formData.title.trim() || !formData.url.trim()) {
-      setError('Title and URL are required');
-      showError('Title and URL are required');
+    if (!formData.title.trim()) {
+      setError('Title is required');
+      showError('Title is required');
+      return;
+    }
+
+    // Check if URL or file is provided based on method
+    if (formData.upload_method === 'url' && !formData.url.trim()) {
+      setError('URL is required');
+      showError('URL is required');
+      return;
+    }
+
+    if (formData.upload_method === 'upload' && !pdfFile) {
+      setError('Please select a PDF file to upload');
+      showError('Please select a PDF file to upload');
       return;
     }
 
@@ -113,10 +165,34 @@ const EducationalResourcesManager = ({ onClose }) => {
         throw new Error('No clinic found');
       }
 
-      // Auto-generate thumbnail for YouTube videos
+      let finalUrl = formData.url;
       let thumbnailUrl = formData.thumbnail_url;
-      if (formData.resource_type === 'youtube' && (formData.url.includes('youtube.com') || formData.url.includes('youtu.be'))) {
-        const videoId = extractYouTubeVideoId(formData.url);
+
+      // Handle PDF upload
+      if (formData.upload_method === 'upload' && pdfFile) {
+        setUploadingPDF(true);
+        setPdfUploadProgress(0);
+        
+        // Simulate progress for better UX
+        const progressInterval = setInterval(() => {
+          setPdfUploadProgress(prev => Math.min(prev + 10, 90));
+        }, 200);
+
+        try {
+          finalUrl = await uploadPDF(pdfFile, formData.category);
+          setPdfUploadProgress(100);
+          clearInterval(progressInterval);
+        } catch (uploadError) {
+          clearInterval(progressInterval);
+          throw uploadError;
+        } finally {
+          setUploadingPDF(false);
+        }
+      }
+
+      // Auto-generate thumbnail for YouTube videos
+      if (formData.resource_type === 'youtube' && finalUrl.includes('youtube')) {
+        const videoId = extractYouTubeVideoId(finalUrl);
         if (videoId) {
           thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
         }
@@ -126,7 +202,7 @@ const EducationalResourcesManager = ({ onClose }) => {
         clinic_id: clinic.id,
         title: formData.title,
         description: formData.description,
-        url: formData.url,
+        url: finalUrl,
         resource_type: formData.resource_type,
         category: formData.category || 'General',
         thumbnail_url: thumbnailUrl,
@@ -153,6 +229,7 @@ const EducationalResourcesManager = ({ onClose }) => {
       showError('Failed to add resource');
     } finally {
       setLoading(false);
+      setUploadingPDF(false);
     }
   };
 
@@ -164,7 +241,8 @@ const EducationalResourcesManager = ({ onClose }) => {
       url: resource.url,
       resource_type: resource.resource_type,
       category: resource.category || '',
-      thumbnail_url: resource.thumbnail_url || ''
+      thumbnail_url: resource.thumbnail_url || '',
+      upload_method: 'url' // Always default to URL for editing
     });
     setShowAddForm(false);
   };
@@ -183,7 +261,7 @@ const EducationalResourcesManager = ({ onClose }) => {
       setError('');
 
       let thumbnailUrl = formData.thumbnail_url;
-      if (formData.resource_type === 'youtube' && (formData.url.includes('youtube.com') || formData.url.includes('youtu.be'))) {
+      if (formData.resource_type === 'youtube' && formData.url.includes('youtube')) {
         const videoId = extractYouTubeVideoId(formData.url);
         if (videoId) {
           thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
@@ -424,6 +502,9 @@ const EducationalResourcesManager = ({ onClose }) => {
             <span>
               {resource.resource_type.charAt(0).toUpperCase() + resource.resource_type.slice(1)}
             </span>
+            {resource.url.includes('supabase') && (
+              <span style={{ color: '#28a745' }}>Uploaded</span>
+            )}
           </div>
         </div>
 
@@ -745,26 +826,121 @@ const EducationalResourcesManager = ({ onClose }) => {
                       </select>
                     </div>
 
-                    <div>
-                      <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '12px' }}>
-                        URL*
-                      </label>
-                      <input
-                        type="url"
-                        value={formData.url}
-                        onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        style={{
-                          width: '100%',
-                          padding: '8px',
-                          border: '2px solid #e1e5e9',
+                    {/* Upload method selection for PDF */}
+                    {formData.resource_type === 'pdf' && !editingResource && (
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '12px' }}>
+                          PDF Source
+                        </label>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
+                            <input
+                              type="radio"
+                              name="upload_method"
+                              value="url"
+                              checked={formData.upload_method === 'url'}
+                              onChange={(e) => setFormData(prev => ({ ...prev, upload_method: e.target.value }))}
+                            />
+                            Link to PDF
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
+                            <input
+                              type="radio"
+                              name="upload_method"
+                              value="upload"
+                              checked={formData.upload_method === 'upload'}
+                              onChange={(e) => setFormData(prev => ({ ...prev, upload_method: e.target.value }))}
+                            />
+                            Upload PDF
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* URL Input or File Upload */}
+                    {formData.upload_method === 'url' || editingResource ? (
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '12px' }}>
+                          URL*
+                        </label>
+                        <input
+                          type="url"
+                          value={formData.url}
+                          onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                          placeholder="https://www.youtube.com/watch?v=... or https://example.com/guide.pdf"
+                          style={{
+                            width: '100%',
+                            padding: '8px',
+                            border: '2px solid #e1e5e9',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            boxSizing: 'border-box'
+                          }}
+                          required
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '12px' }}>
+                          Upload PDF File*
+                        </label>
+                        <div style={{
+                          border: '2px dashed #e1e5e9',
                           borderRadius: '6px',
-                          fontSize: '14px',
-                          boxSizing: 'border-box'
+                          padding: '16px',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          backgroundColor: pdfFile ? '#f0f8ff' : '#fafafa'
                         }}
-                        required
-                      />
-                    </div>
+                        onClick={() => fileInputRef.current?.click()}
+                        >
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".pdf"
+                            onChange={handleFileSelect}
+                            style={{ display: 'none' }}
+                          />
+                          {pdfFile ? (
+                            <div style={{ color: '#28a745' }}>
+                              <FontAwesomeIcon icon={faCheckCircle} style={{ marginBottom: '8px', fontSize: '24px' }} />
+                              <p style={{ margin: '0 0 4px 0', fontWeight: '500' }}>{pdfFile.name}</p>
+                              <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>
+                                {formatFileSize(pdfFile.size)} • Click to change
+                              </p>
+                            </div>
+                          ) : (
+                            <div style={{ color: '#666' }}>
+                              <FontAwesomeIcon icon={faUpload} style={{ marginBottom: '8px', fontSize: '24px' }} />
+                              <p style={{ margin: '0 0 4px 0' }}>Click to select PDF file</p>
+                              <p style={{ margin: 0, fontSize: '12px' }}>Maximum 10MB</p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {uploadingPDF && (
+                          <div style={{ marginTop: '8px' }}>
+                            <div style={{
+                              width: '100%',
+                              height: '4px',
+                              backgroundColor: '#e1e5e9',
+                              borderRadius: '2px',
+                              overflow: 'hidden'
+                            }}>
+                              <div style={{
+                                width: `${pdfUploadProgress}%`,
+                                height: '100%',
+                                backgroundColor: '#4285f4',
+                                transition: 'width 0.3s ease'
+                              }} />
+                            </div>
+                            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
+                              Uploading... {pdfUploadProgress}%
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <div style={{ flex: 1 }}>
@@ -812,7 +988,7 @@ const EducationalResourcesManager = ({ onClose }) => {
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button 
                         type="submit" 
-                        disabled={loading}
+                        disabled={loading || uploadingPDF}
                         style={{
                           flex: 1,
                           padding: '10px 16px',
@@ -820,17 +996,26 @@ const EducationalResourcesManager = ({ onClose }) => {
                           color: 'white',
                           border: 'none',
                           borderRadius: '6px',
-                          cursor: loading ? 'not-allowed' : 'pointer',
+                          cursor: (loading || uploadingPDF) ? 'not-allowed' : 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '6px',
-                          opacity: loading ? 0.6 : 1,
+                          opacity: (loading || uploadingPDF) ? 0.6 : 1,
                           fontSize: '14px'
                         }}
                       >
-                        <FontAwesomeIcon icon={editingResource ? faSave : faPlus} />
-                        {loading ? 'Saving...' : (editingResource ? 'Save' : 'Add')}
+                        {uploadingPDF ? (
+                          <>
+                            <FontAwesomeIcon icon={faSpinner} spin />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <FontAwesomeIcon icon={editingResource ? faSave : faPlus} />
+                            {loading ? 'Saving...' : (editingResource ? 'Save' : 'Add')}
+                          </>
+                        )}
                       </button>
                       
                       <button 
@@ -840,6 +1025,7 @@ const EducationalResourcesManager = ({ onClose }) => {
                           setEditingResource(null);
                           resetForm();
                         }}
+                        disabled={uploadingPDF}
                         style={{
                           flex: 1,
                           padding: '10px 16px',
@@ -847,8 +1033,9 @@ const EducationalResourcesManager = ({ onClose }) => {
                           color: 'white',
                           border: 'none',
                           borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '14px'
+                          cursor: uploadingPDF ? 'not-allowed' : 'pointer',
+                          fontSize: '14px',
+                          opacity: uploadingPDF ? 0.6 : 1
                         }}
                       >
                         Cancel
@@ -929,8 +1116,8 @@ const EducationalResourcesManager = ({ onClose }) => {
               fontSize: '12px',
               color: '#1a73e8'
             }}>
-              <strong>Next Step:</strong> After adding resources here, link them to specific statuses 
-              in the Status Management section.
+              <strong>Tip:</strong> Upload PDFs directly to store them securely, or link to existing online resources.
+              After adding resources, link them to specific statuses in the Link Resources section.
             </div>
           </div>
         </div>
