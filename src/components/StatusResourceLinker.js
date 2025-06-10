@@ -1,4 +1,4 @@
-// src/components/StatusResourceLinker.js - Mobile-Optimized Version
+// src/components/StatusResourceLinker.js - Mobile-Optimized Version with Desktop Improvements
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -213,7 +213,10 @@ const StatusResourceLinker = ({ onClose }) => {
     resource.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const renderMobileResourceCard = (resource, isLinked = false, index = null) => (
+  const renderMobileResourceCard = (resource, isLinked = false, index = null) => {
+    const isDesktop = window.innerWidth > 768;
+    
+    return (
     <div
       key={resource.id}
       draggable={isLinked}
@@ -224,7 +227,7 @@ const StatusResourceLinker = ({ onClose }) => {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        padding: '12px',
+        padding: isDesktop ? '16px' : '12px', // More padding on desktop
         backgroundColor: dragOverIndex === index ? '#e3f2fd' : 'white',
         border: '1px solid #e1e5e9',
         borderRadius: '8px',
@@ -233,7 +236,7 @@ const StatusResourceLinker = ({ onClose }) => {
         transform: draggedIndex === index ? 'rotate(1deg)' : 'none',
         opacity: draggedIndex === index ? 0.5 : 1,
         transition: isLinked ? 'all 0.2s ease' : 'none',
-        minHeight: '80px'
+        minHeight: isDesktop ? '100px' : '80px' // Taller cards on desktop
       }}
     >
       {/* Header with thumbnail and title */}
@@ -241,17 +244,22 @@ const StatusResourceLinker = ({ onClose }) => {
         {isLinked && (
           <FontAwesomeIcon 
             icon={faGripVertical} 
-            style={{ color: '#666', marginRight: '8px', marginTop: '4px', fontSize: '12px' }}
+            style={{ 
+              color: '#666', 
+              marginRight: '8px', 
+              marginTop: '4px', 
+              fontSize: isDesktop ? '14px' : '12px' // Larger on desktop
+            }}
           />
         )}
         
         {/* Thumbnail */}
         <div style={{
-          width: '40px',
-          height: '30px',
+          width: isDesktop ? '60px' : '40px', // Larger thumbnail on desktop
+          height: isDesktop ? '45px' : '30px',
           borderRadius: '4px',
           overflow: 'hidden',
-          marginRight: '8px',
+          marginRight: isDesktop ? '12px' : '8px',
           backgroundColor: '#f5f5f5',
           display: 'flex',
           alignItems: 'center',
@@ -272,7 +280,7 @@ const StatusResourceLinker = ({ onClose }) => {
             <FontAwesomeIcon 
               icon={getResourceIcon(resource.resource_type)}
               style={{
-                fontSize: '14px',
+                fontSize: isDesktop ? '18px' : '14px', // Larger icon on desktop
                 color: getResourceTypeColor(resource.resource_type)
               }}
             />
@@ -282,7 +290,7 @@ const StatusResourceLinker = ({ onClose }) => {
         {/* Title and type */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: '14px',
+            fontSize: isDesktop ? '16px' : '14px', // Larger text on desktop
             fontWeight: '600',
             marginBottom: '2px',
             display: 'flex',
@@ -295,7 +303,7 @@ const StatusResourceLinker = ({ onClose }) => {
               icon={getResourceIcon(resource.resource_type)}
               style={{
                 color: getResourceTypeColor(resource.resource_type),
-                fontSize: '12px',
+                fontSize: isDesktop ? '14px' : '12px', // Larger on desktop
                 flexShrink: 0
               }}
             />
@@ -303,7 +311,11 @@ const StatusResourceLinker = ({ onClose }) => {
             {isLinked && resource.is_featured && (
               <FontAwesomeIcon 
                 icon={faStar} 
-                style={{ color: '#ffc107', fontSize: '10px', flexShrink: 0 }}
+                style={{ 
+                  color: '#ffc107', 
+                  fontSize: isDesktop ? '12px' : '10px', // Larger on desktop
+                  flexShrink: 0 
+                }}
                 title="Featured resource"
               />
             )}
@@ -312,7 +324,7 @@ const StatusResourceLinker = ({ onClose }) => {
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
             {resource.category && (
               <span style={{
-                fontSize: '10px',
+                fontSize: isDesktop ? '12px' : '10px', // Larger on desktop
                 color: '#666',
                 padding: '1px 4px',
                 backgroundColor: '#e9ecef',
@@ -322,7 +334,7 @@ const StatusResourceLinker = ({ onClose }) => {
               </span>
             )}
             <span style={{
-              fontSize: '10px',
+              fontSize: isDesktop ? '12px' : '10px', // Larger on desktop
               color: '#999'
             }}>
               {resource.resource_type.charAt(0).toUpperCase() + resource.resource_type.slice(1)}
@@ -345,8 +357,8 @@ const StatusResourceLinker = ({ onClose }) => {
             border: '1px solid #4285f4',
             color: '#4285f4',
             cursor: 'pointer',
-            padding: '4px 8px',
-            fontSize: '10px',
+            padding: isDesktop ? '6px 12px' : '4px 8px', // Larger buttons on desktop
+            fontSize: isDesktop ? '12px' : '10px',
             borderRadius: '4px',
             display: 'flex',
             alignItems: 'center',
@@ -354,7 +366,7 @@ const StatusResourceLinker = ({ onClose }) => {
           }}
           title="Open resource"
         >
-          <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '8px' }} />
+          <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: isDesktop ? '10px' : '8px' }} />
           Open
         </button>
         
@@ -369,8 +381,8 @@ const StatusResourceLinker = ({ onClose }) => {
                   borderColor: resource.is_featured ? '#ffc107' : '#ccc',
                   color: resource.is_featured ? '#ffc107' : '#ccc',
                   cursor: 'pointer',
-                  padding: '4px 6px',
-                  fontSize: '10px',
+                  padding: isDesktop ? '6px 8px' : '4px 6px', // Larger buttons on desktop
+                  fontSize: isDesktop ? '12px' : '10px',
                   borderRadius: '4px'
                 }}
                 title={resource.is_featured ? 'Remove from featured' : 'Mark as featured'}
@@ -385,8 +397,8 @@ const StatusResourceLinker = ({ onClose }) => {
                   border: '1px solid #d32f2f',
                   color: '#d32f2f',
                   cursor: 'pointer',
-                  padding: '4px 6px',
-                  fontSize: '10px',
+                  padding: isDesktop ? '6px 8px' : '4px 6px', // Larger buttons on desktop
+                  fontSize: isDesktop ? '12px' : '10px',
                   borderRadius: '4px'
                 }}
                 title="Unlink resource"
@@ -402,8 +414,8 @@ const StatusResourceLinker = ({ onClose }) => {
                 border: 'none',
                 color: 'white',
                 cursor: 'pointer',
-                padding: '6px 10px',
-                fontSize: '10px',
+                padding: isDesktop ? '8px 14px' : '6px 10px', // Larger buttons on desktop
+                fontSize: isDesktop ? '12px' : '10px',
                 borderRadius: '4px',
                 display: 'flex',
                 alignItems: 'center',
@@ -411,14 +423,15 @@ const StatusResourceLinker = ({ onClose }) => {
               }}
               title="Link to status"
             >
-              <FontAwesomeIcon icon={faPlus} style={{ fontSize: '8px' }} />
+              <FontAwesomeIcon icon={faPlus} style={{ fontSize: isDesktop ? '10px' : '8px' }} />
               Link
             </button>
           )}
         </div>
       </div>
     </div>
-  );
+  )
+  };
 
   return (
     <>
@@ -439,7 +452,7 @@ const StatusResourceLinker = ({ onClose }) => {
           backgroundColor: 'white',
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '100vw',
+          maxWidth: window.innerWidth > 768 ? '900px' : '100vw', // Larger max width on desktop
           maxHeight: '95vh',
           overflow: 'auto',
           display: 'flex',
@@ -461,7 +474,7 @@ const StatusResourceLinker = ({ onClose }) => {
               display: 'flex', 
               alignItems: 'center', 
               gap: '8px',
-              fontSize: '1rem'
+              fontSize: window.innerWidth > 768 ? '1.25rem' : '1rem' // Larger on desktop
             }}>
               <FontAwesomeIcon icon={faLink} />
               Link Resources to Status
@@ -481,7 +494,7 @@ const StatusResourceLinker = ({ onClose }) => {
             </button>
           </div>
 
-          <div style={{ padding: '16px', flex: 1, overflow: 'auto' }}>
+          <div style={{ padding: window.innerWidth > 768 ? '24px' : '16px', flex: 1, overflow: 'auto' }}>
             {error && (
               <div style={{
                 backgroundColor: '#fee',
@@ -490,7 +503,7 @@ const StatusResourceLinker = ({ onClose }) => {
                 borderRadius: '6px',
                 marginBottom: '16px',
                 border: '1px solid #fab1a0',
-                fontSize: '14px'
+                fontSize: window.innerWidth > 768 ? '16px' : '14px' // Larger text on desktop
               }}>
                 {error}
               </div>
@@ -502,7 +515,7 @@ const StatusResourceLinker = ({ onClose }) => {
                 display: 'block', 
                 marginBottom: '8px', 
                 fontWeight: '600',
-                fontSize: '14px'
+                fontSize: window.innerWidth > 768 ? '16px' : '14px' // Larger labels on desktop
               }}>
                 Select Status:
               </label>
@@ -510,10 +523,10 @@ const StatusResourceLinker = ({ onClose }) => {
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 style={{
-                  padding: '10px',
+                  padding: window.innerWidth > 768 ? '12px' : '10px', // Larger padding on desktop
                   border: '2px solid #e1e5e9',
                   borderRadius: '8px',
-                  fontSize: '14px',
+                  fontSize: window.innerWidth > 768 ? '16px' : '14px', // Larger text on desktop
                   width: '100%',
                   boxSizing: 'border-box'
                 }}
@@ -536,7 +549,7 @@ const StatusResourceLinker = ({ onClose }) => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    fontSize: '14px'
+                    fontSize: window.innerWidth > 768 ? '16px' : '14px' // Larger text on desktop
                   }}>
                     <FontAwesomeIcon icon={faCheck} style={{ color: '#28a745' }} />
                     Linked to "{selectedStatus}" ({linkedResources.length})
@@ -569,8 +582,10 @@ const StatusResourceLinker = ({ onClose }) => {
                       
                       <div style={{ 
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                        gap: '8px'
+                        gridTemplateColumns: window.innerWidth > 768 
+                          ? 'repeat(auto-fit, minmax(320px, 1fr))' // Larger cards on desktop
+                          : 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: window.innerWidth > 768 ? '12px' : '8px' // More spacing on desktop
                       }}>
                         {linkedResources.map((resource, index) => 
                           renderMobileResourceCard(resource, true, index)
@@ -593,7 +608,7 @@ const StatusResourceLinker = ({ onClose }) => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      fontSize: '14px'
+                      fontSize: window.innerWidth > 768 ? '16px' : '14px' // Larger text on desktop
                     }}>
                       <FontAwesomeIcon icon={faPlus} style={{ color: '#28a745' }} />
                       Available ({filteredAvailableResources.length})
@@ -623,10 +638,10 @@ const StatusResourceLinker = ({ onClose }) => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                       style={{
                         width: '100%',
-                        padding: '8px 10px 8px 32px',
+                        padding: window.innerWidth > 768 ? '10px 10px 10px 36px' : '8px 10px 8px 32px', // Larger padding on desktop
                         border: '1px solid #e1e5e9',
                         borderRadius: '6px',
-                        fontSize: '12px',
+                        fontSize: window.innerWidth > 768 ? '16px' : '12px', // Larger text on desktop
                         boxSizing: 'border-box'
                       }}
                     />
@@ -656,7 +671,7 @@ const StatusResourceLinker = ({ onClose }) => {
                     <div style={{ 
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '8px'
+                      gap: window.innerWidth > 768 ? '12px' : '8px' // More spacing on desktop
                     }}>
                       {filteredAvailableResources.map((resource) => (
                         <div
@@ -664,23 +679,23 @@ const StatusResourceLinker = ({ onClose }) => {
                           style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            padding: '12px',
+                            padding: window.innerWidth > 768 ? '16px' : '12px', // More padding on desktop
                             backgroundColor: 'white',
                             border: '1px solid #e1e5e9',
                             borderRadius: '8px',
                             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            minHeight: '80px'
+                            minHeight: window.innerWidth > 768 ? '100px' : '80px' // Taller on desktop
                           }}
                         >
                           {/* Header with thumbnail and title */}
                           <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '8px' }}>
                             {/* Thumbnail */}
                             <div style={{
-                              width: '40px',
-                              height: '30px',
+                              width: window.innerWidth > 768 ? '60px' : '40px', // Larger on desktop
+                              height: window.innerWidth > 768 ? '45px' : '30px',
                               borderRadius: '4px',
                               overflow: 'hidden',
-                              marginRight: '8px',
+                              marginRight: window.innerWidth > 768 ? '12px' : '8px',
                               backgroundColor: '#f5f5f5',
                               display: 'flex',
                               alignItems: 'center',
@@ -701,7 +716,7 @@ const StatusResourceLinker = ({ onClose }) => {
                                 <FontAwesomeIcon 
                                   icon={getResourceIcon(resource.resource_type)}
                                   style={{
-                                    fontSize: '14px',
+                                    fontSize: window.innerWidth > 768 ? '18px' : '14px', // Larger on desktop
                                     color: getResourceTypeColor(resource.resource_type)
                                   }}
                                 />
@@ -711,7 +726,7 @@ const StatusResourceLinker = ({ onClose }) => {
                             {/* Title and type */}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{
-                                fontSize: '14px',
+                                fontSize: window.innerWidth > 768 ? '16px' : '14px', // Larger on desktop
                                 fontWeight: '600',
                                 marginBottom: '2px',
                                 display: 'flex',
@@ -724,7 +739,7 @@ const StatusResourceLinker = ({ onClose }) => {
                                   icon={getResourceIcon(resource.resource_type)}
                                   style={{
                                     color: getResourceTypeColor(resource.resource_type),
-                                    fontSize: '12px',
+                                    fontSize: window.innerWidth > 768 ? '14px' : '12px', // Larger on desktop
                                     flexShrink: 0
                                   }}
                                 />
@@ -734,7 +749,7 @@ const StatusResourceLinker = ({ onClose }) => {
                               <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                                 {resource.category && (
                                   <span style={{
-                                    fontSize: '10px',
+                                    fontSize: window.innerWidth > 768 ? '12px' : '10px', // Larger on desktop
                                     color: '#666',
                                     padding: '1px 4px',
                                     backgroundColor: '#e9ecef',
@@ -744,7 +759,7 @@ const StatusResourceLinker = ({ onClose }) => {
                                   </span>
                                 )}
                                 <span style={{
-                                  fontSize: '10px',
+                                  fontSize: window.innerWidth > 768 ? '12px' : '10px', // Larger on desktop
                                   color: '#999'
                                 }}>
                                   {resource.resource_type.charAt(0).toUpperCase() + resource.resource_type.slice(1)}
@@ -767,8 +782,8 @@ const StatusResourceLinker = ({ onClose }) => {
                                 border: '1px solid #4285f4',
                                 color: '#4285f4',
                                 cursor: 'pointer',
-                                padding: '4px 8px',
-                                fontSize: '10px',
+                                padding: window.innerWidth > 768 ? '6px 12px' : '4px 8px', // Larger on desktop
+                                fontSize: window.innerWidth > 768 ? '12px' : '10px',
                                 borderRadius: '4px',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -776,7 +791,7 @@ const StatusResourceLinker = ({ onClose }) => {
                               }}
                               title="Open resource"
                             >
-                              <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '8px' }} />
+                              <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: window.innerWidth > 768 ? '10px' : '8px' }} />
                               Open
                             </button>
                             
@@ -787,8 +802,8 @@ const StatusResourceLinker = ({ onClose }) => {
                                 border: 'none',
                                 color: 'white',
                                 cursor: 'pointer',
-                                padding: '6px 10px',
-                                fontSize: '10px',
+                                padding: window.innerWidth > 768 ? '8px 14px' : '6px 10px', // Larger on desktop
+                                fontSize: window.innerWidth > 768 ? '12px' : '10px',
                                 borderRadius: '4px',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -796,7 +811,7 @@ const StatusResourceLinker = ({ onClose }) => {
                               }}
                               title="Link to status"
                             >
-                              <FontAwesomeIcon icon={faPlus} style={{ fontSize: '8px' }} />
+                              <FontAwesomeIcon icon={faPlus} style={{ fontSize: window.innerWidth > 768 ? '10px' : '8px' }} />
                               Link
                             </button>
                           </div>
