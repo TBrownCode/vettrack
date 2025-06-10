@@ -1,0 +1,437 @@
+/* src/styles/SoftDeletedPatients.css */
+.soft-deleted-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.soft-deleted-card {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.soft-deleted-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: #d32f2f;
+  color: white;
+  flex-shrink: 0;
+}
+
+.soft-deleted-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.soft-deleted-content {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.error-message {
+  background-color: #fee;
+  color: #d63031;
+  padding: 12px;
+  border-radius: 6px;
+  marginBottom: 20px;
+  border: 1px solid #fab1a0;
+  font-size: 14px;
+}
+
+.info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: #856404;
+}
+
+.info-banner svg {
+  color: #ff9800;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f0f0f0;
+  border-left-color: #d32f2f;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.no-patients {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #666;
+}
+
+.no-patients svg {
+  color: #4caf50;
+  margin-bottom: 16px;
+}
+
+.no-patients h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.no-patients p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.patients-summary {
+  margin-bottom: 20px;
+}
+
+.patients-summary h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.patients-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.deleted-patient-card {
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.deleted-patient-card.expired {
+  border-color: #d32f2f;
+  background-color: #fef2f2;
+}
+
+.deleted-patient-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.patient-main-info {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.patient-avatar-small {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #e0e0e0;
+  flex-shrink: 0;
+}
+
+.patient-avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.patient-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.patient-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.patient-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.time-remaining-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.patient-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 12px;
+}
+
+.patient-contact-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #666;
+}
+
+.info-item svg {
+  width: 12px;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.status-badge-small {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  background-color: #f5f5f5;
+  color: #666;
+  white-space: nowrap;
+}
+
+.deletion-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: #999;
+  margin-top: 8px;
+}
+
+.deleted-date,
+.expires-date {
+  font-style: italic;
+}
+
+.patient-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.restore-btn {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #4caf50;
+}
+
+.restore-btn:hover {
+  background-color: #c8e6c9;
+  transform: translateY(-1px);
+}
+
+.delete-btn {
+  background-color: #fef2f2;
+  color: #d32f2f;
+  border: 1px solid #f44336;
+}
+
+.delete-btn:hover {
+  background-color: #ffebee;
+  transform: translateY(-1px);
+}
+
+.help-section {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.help-section h5 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.help-section ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 13px;
+  color: #666;
+}
+
+.help-section li {
+  margin-bottom: 4px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .soft-deleted-modal {
+    padding: 10px;
+  }
+  
+  .soft-deleted-content {
+    padding: 16px;
+  }
+  
+  .patient-main-info {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .patient-avatar-small {
+    width: 50px;
+    height: 50px;
+    align-self: center;
+  }
+  
+  .patient-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .time-remaining-badge {
+    align-self: flex-start;
+  }
+  
+  .patient-contact-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .patient-actions {
+    justify-content: center;
+    margin-top: 12px;
+  }
+  
+  .legend {
+    gap: 8px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .soft-deleted-header {
+    padding: 16px;
+  }
+  
+  .soft-deleted-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .patient-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .legend {
+    flex-direction: column;
+    gap: 6px;
+  }
+}

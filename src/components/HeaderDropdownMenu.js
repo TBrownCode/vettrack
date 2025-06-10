@@ -9,13 +9,14 @@ import {
   faCog, 
   faVideo, 
   faLink,
-  faUserPlus
+  faUserPlus,
+  faTrashRestore
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
 import UserManagement from './UserManagement';
 import '../styles/HeaderDropdownMenu.css';
 
-const HeaderDropdownMenu = ({ onStatusManagement, onEducationalManager, onResourceLinker }) => {
+const HeaderDropdownMenu = ({ onStatusManagement, onEducationalManager, onResourceLinker, onSoftDeletedPatients }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const dropdownRef = useRef(null);
@@ -117,6 +118,17 @@ const HeaderDropdownMenu = ({ onStatusManagement, onEducationalManager, onResour
                 <div className="dropdown-divider" />
               </>
             )}
+
+            {/* Available to All Staff */}
+            <button 
+              className="dropdown-item"
+              onClick={() => handleMenuItemClick(onSoftDeletedPatients)}
+            >
+              <FontAwesomeIcon icon={faTrashRestore} className="dropdown-icon" />
+              Recently Deleted Patients
+            </button>
+
+            <div className="dropdown-divider" />
 
             {/* Standard Menu Items */}
             <button 

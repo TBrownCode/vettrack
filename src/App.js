@@ -1,4 +1,4 @@
-// src/App.js - Updated with Header Dropdown Menu
+// src/App.js - Updated with Header Dropdown Menu and SoftDeletedPatients
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,11 +22,13 @@ import HeaderDropdownMenu from './components/HeaderDropdownMenu';
 import StatusManagement from './components/StatusManagement';
 import EducationalResourcesManager from './components/EducationalResourcesManager';
 import StatusResourceLinker from './components/StatusResourceLinker';
+import SoftDeletedPatients from './components/SoftDeletedPatients';
 
 function App() {
   const [showStatusManagement, setShowStatusManagement] = useState(false);
   const [showEducationalManager, setShowEducationalManager] = useState(false);
   const [showResourceLinker, setShowResourceLinker] = useState(false);
+  const [showSoftDeletedPatients, setShowSoftDeletedPatients] = useState(false);
 
   return (
     <AuthProvider>
@@ -49,6 +51,7 @@ function App() {
                     onStatusManagement={() => setShowStatusManagement(true)}
                     onEducationalManager={() => setShowEducationalManager(true)}
                     onResourceLinker={() => setShowResourceLinker(true)}
+                    onSoftDeletedPatients={() => setShowSoftDeletedPatients(true)}
                   />
                 </header>
                 <main>
@@ -72,6 +75,7 @@ function App() {
                     onStatusManagement={() => setShowStatusManagement(true)}
                     onEducationalManager={() => setShowEducationalManager(true)}
                     onResourceLinker={() => setShowResourceLinker(true)}
+                    onSoftDeletedPatients={() => setShowSoftDeletedPatients(true)}
                   />
                 </header>
                 <main>
@@ -95,6 +99,10 @@ function App() {
           
           {showResourceLinker && (
             <StatusResourceLinker onClose={() => setShowResourceLinker(false)} />
+          )}
+          
+          {showSoftDeletedPatients && (
+            <SoftDeletedPatients onClose={() => setShowSoftDeletedPatients(false)} />
           )}
         </div>
       </Router>
