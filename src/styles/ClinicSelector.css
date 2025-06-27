@@ -1,0 +1,194 @@
+/* src/styles/ClinicSelector.css */
+.clinic-selector-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  min-width: 280px;
+}
+
+.clinic-selector-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.clinic-dropdown {
+  position: relative;
+}
+
+.clinic-dropdown-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.clinic-dropdown-button:hover {
+  border-color: #4285f4;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.2);
+}
+
+.clinic-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.clinic-color-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.clinic-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.clinic-name {
+  font-weight: 600;
+  color: #333;
+  line-height: 1.2;
+}
+
+.clinic-description {
+  font-size: 0.75rem;
+  color: #666;
+  line-height: 1.2;
+}
+
+.dropdown-arrow {
+  color: #666;
+  transition: transform 0.2s ease;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.clinic-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  margin-top: 4px;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.clinic-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 0.875rem;
+  position: relative;
+}
+
+.clinic-option:hover {
+  background-color: #f8f9fa;
+}
+
+.clinic-option.active {
+  background-color: #e8f0fe;
+}
+
+.clinic-option .clinic-details {
+  flex: 1;
+}
+
+.active-indicator {
+  color: #4285f4;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .clinic-selector-container {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin: 16px;
+    min-width: auto;
+  }
+}
+
+/* Development mode indicator */
+.clinic-selector-container::before {
+  content: 'DEV';
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  background: #ff6b6b;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+/* Production mode (when explicitly enabled) */
+.clinic-selector-container.production-mode::before {
+  content: 'CLINIC';
+  background: #4285f4;
+}
+
+/* Animation for smooth appearance */
+.clinic-selector-container {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Hover effects */
+.clinic-dropdown-button:active {
+  transform: scale(0.98);
+}
+
+.clinic-option:active {
+  transform: scale(0.98);
+}

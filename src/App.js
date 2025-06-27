@@ -1,17 +1,6 @@
-// src/App.js - Updated with Header Dropdown Menu and SoftDeletedPatients
+// src/App.js - Updated with Clinic Selector
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faBars, 
-  faTimes, 
-  faUser, 
-  faSignOutAlt, 
-  faCog, 
-  faVideo, 
-  faLink,
-  faUserPlus
-} from '@fortawesome/free-solid-svg-icons';
 import './App.css';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -19,6 +8,7 @@ import Home from './pages/Home';
 import PatientDetail from './pages/PatientDetail';
 import PatientStatusTracker from './pages/PatientStatusTracker';
 import HeaderDropdownMenu from './components/HeaderDropdownMenu';
+import ClinicSelector from './components/ClinicSelector';
 import StatusManagement from './components/StatusManagement';
 import EducationalResourcesManager from './components/EducationalResourcesManager';
 import StatusResourceLinker from './components/StatusResourceLinker';
@@ -34,6 +24,9 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="App">
+          {/* Clinic Selector - Shows in development, can be enabled for production */}
+          <ClinicSelector showInProduction={false} />
+          
           <Routes>
             {/* Public route for owner status tracking */}
             <Route path="/status/:id" element={<PatientStatusTracker />} />
@@ -46,7 +39,6 @@ function App() {
                     <h1>VetTrack</h1>
                   </Link>
                   
-                  {/* NEW: Header Dropdown Menu */}
                   <HeaderDropdownMenu
                     onStatusManagement={() => setShowStatusManagement(true)}
                     onEducationalManager={() => setShowEducationalManager(true)}
@@ -70,7 +62,6 @@ function App() {
                     <h1>VetTrack</h1>
                   </Link>
                   
-                  {/* NEW: Header Dropdown Menu */}
                   <HeaderDropdownMenu
                     onStatusManagement={() => setShowStatusManagement(true)}
                     onEducationalManager={() => setShowEducationalManager(true)}
