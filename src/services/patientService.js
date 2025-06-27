@@ -1,4 +1,4 @@
-// src/services/patientService.js - Updated for multi-clinic compatibility
+// src/services/patientService.js - Updated for multi-clinic compatibility with fixed timestamps
 import { supabase } from '../lib/supabase';
 import { uploadPhotoFromDataURL } from './photoService';
 
@@ -113,28 +113,61 @@ export const getPatientByIdForOwner = async (id) => {
   }
 };
 
-// Get patient status history
+// Get patient status history with photos - RESTORED TIMESTAMPS
 export const getPatientStatusHistory = async (patientId) => {
   try {
     const { data, error } = await supabase
       .from('status_history')
-      .select('*')
+      .select(`
+        *,
+        status_photos (
+          id,
+          photo_url,
+          created_at
+        )
+      `)
       .eq('patient_id', patientId)
       .order('changed_at', { ascending: false });
 
     if (error) throw error;
 
+    // Transform to match timeline format - FIXED to include proper timestamps
     return data.map(entry => ({
       id: entry.id,
       title: entry.new_status,
-      time: new Date(entry.changed_at).toLocaleTimeString(),
-      photoUrl: entry.photo_url,
+      description: getStatusDescription(entry.new_status),
+      timestamp: new Date(entry.changed_at).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }), // This ensures timestamps show like "08:50 PM"
+      date: new Date(entry.changed_at).toLocaleDateString(),
+      status: 'completed',
+      hasPhoto: entry.status_photos && entry.status_photos.length > 0,
+      photos: entry.status_photos || [],
+      hasEducationalContent: true,
       changedBy: entry.changed_by
     }));
   } catch (error) {
     console.error('Error fetching status history:', error);
     throw error;
   }
+};
+
+// Helper function to get status descriptions
+const getStatusDescription = (status) => {
+  const descriptions = {
+    'Admitted': 'Your pet has arrived and is being settled in',
+    'Being Examined': 'Initial examination and assessment',
+    'Awaiting Tests': 'Waiting for diagnostic tests or results',
+    'Test Results Pending': 'Tests completed, waiting for results',
+    'Being Prepped for Surgery': 'Preparing for the surgical procedure',
+    'In Surgery': 'Surgical procedure in progress',
+    'In Recovery': 'Surgery complete, recovering comfortably',
+    'Awake & Responsive': 'Alert and responding well to treatment',
+    'Ready for Discharge': 'All set to go home!',
+    'Discharged': 'Successfully discharged and on the way home'
+  };
+  return descriptions[status] || 'Status updated';
 };
 
 // Update patient status
@@ -490,6 +523,43 @@ export const getAllStatusOptions = async () => {
   }
 };
 
+// Send update to owner with real SMS/Email integration
+export const sendPatientUpdate = async (updateData) => {
+  try {
+    // Call the Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke('send-patient-update', {
+      body: {
+        patientId: updateData.patientId,
+        messageType: updateData.messageType,
+        message: updateData.message,
+        sendVia: updateData.sendVia,
+        includePhoto: updateData.includePhoto,
+        recipientName: updateData.recipientName,
+        recipientContact: updateData.recipientContact,
+        recipientEmail: updateData.recipientEmail,
+      }
+    });
+
+    if (error) {
+      console.error('Edge function error:', error);
+      throw new Error(`Failed to send update: ${error.message}`);
+    }
+
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to send update');
+    }
+
+    return {
+      success: true,
+      message: data.message,
+      results: data.results
+    };
+  } catch (error) {
+    console.error('Error sending update:', error);
+    throw error;
+  }
+};
+
 // Get soft deleted patients (for recovery)
 export const getSoftDeletedPatients = async () => {
   try {
@@ -652,43 +722,6 @@ export const deleteLastStatusUpdate = async (patientId) => {
     };
   } catch (error) {
     console.error('Error deleting last status update:', error);
-    throw error;
-  }
-};
-
-// Send update to owner with real SMS/Email integration
-export const sendPatientUpdate = async (updateData) => {
-  try {
-    // Call the Supabase Edge Function
-    const { data, error } = await supabase.functions.invoke('send-patient-update', {
-      body: {
-        patientId: updateData.patientId,
-        messageType: updateData.messageType,
-        message: updateData.message,
-        sendVia: updateData.sendVia,
-        includePhoto: updateData.includePhoto,
-        recipientName: updateData.recipientName,
-        recipientContact: updateData.recipientContact,
-        recipientEmail: updateData.recipientEmail,
-      }
-    });
-
-    if (error) {
-      console.error('Edge function error:', error);
-      throw new Error(`Failed to send update: ${error.message}`);
-    }
-
-    if (!data.success) {
-      throw new Error(data.message || 'Failed to send update');
-    }
-
-    return {
-      success: true,
-      message: data.message,
-      results: data.results
-    };
-  } catch (error) {
-    console.error('Error sending update:', error);
     throw error;
   }
 };
