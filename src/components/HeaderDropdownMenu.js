@@ -1,4 +1,4 @@
-// src/components/HeaderDropdownMenu.js - Header Dropdown Menu Component
+// src/components/HeaderDropdownMenu.js - Updated with Change Password option
 import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -10,15 +10,18 @@ import {
   faVideo, 
   faLink,
   faUserPlus,
-  faTrashRestore
+  faTrashRestore,
+  faLock
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
 import UserManagement from './UserManagement';
+import ChangePasswordForm from './ChangePasswordForm';
 import '../styles/HeaderDropdownMenu.css';
 
 const HeaderDropdownMenu = ({ onStatusManagement, onEducationalManager, onResourceLinker, onSoftDeletedPatients }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const dropdownRef = useRef(null);
   const { user, signOut } = useAuth();
 
@@ -69,7 +72,7 @@ const HeaderDropdownMenu = ({ onStatusManagement, onEducationalManager, onResour
               </div>
               <div className="user-info">
                 <div className="user-name">
-                  {user?.user_metadata?.full_name || 'Staff Member'}
+                  {user?.user_metadata?.full_name || user?.app_metadata?.full_name || 'Staff Member'}
                 </div>
                 <div className="user-email">{user?.email}</div>
                 <div className="user-role">
@@ -133,6 +136,14 @@ const HeaderDropdownMenu = ({ onStatusManagement, onEducationalManager, onResour
             {/* Standard Menu Items */}
             <button 
               className="dropdown-item"
+              onClick={() => handleMenuItemClick(() => setShowChangePassword(true))}
+            >
+              <FontAwesomeIcon icon={faLock} className="dropdown-icon" />
+              Change Password
+            </button>
+
+            <button 
+              className="dropdown-item"
               onClick={() => handleMenuItemClick(() => console.log('Profile clicked'))}
             >
               <FontAwesomeIcon icon={faUser} className="dropdown-icon" />
@@ -153,6 +164,11 @@ const HeaderDropdownMenu = ({ onStatusManagement, onEducationalManager, onResour
       {/* User Management Modal */}
       {showUserManagement && (
         <UserManagement onClose={() => setShowUserManagement(false)} />
+      )}
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <ChangePasswordForm onClose={() => setShowChangePassword(false)} />
       )}
     </>
   );

@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.js
+// src/contexts/AuthContext.js - Updated with password functions
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -61,11 +61,38 @@ export const AuthProvider = ({ children }) => {
     return { error };
   };
 
+  // NEW: Password reset functionality
+  const resetPassword = async (email) => {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    });
+    return { data, error };
+  };
+
+  // NEW: Change password functionality
+  const updatePassword = async (newPassword) => {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    return { data, error };
+  };
+
+  // NEW: Update user profile
+  const updateProfile = async (updates) => {
+    const { data, error } = await supabase.auth.updateUser({
+      data: updates
+    });
+    return { data, error };
+  };
+
   const value = {
     user,
     signIn,
     signUp,
     signOut,
+    resetPassword,      // NEW
+    updatePassword,     // NEW
+    updateProfile,      // NEW
     loading
   };
 

@@ -3,7 +3,7 @@
   position: fixed;
   top: 16px;
   right: 16px;
-  z-index: 9999;
+  z-index: 1000; /* Changed from 9999 to 1000 */
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-radius: 12px;
