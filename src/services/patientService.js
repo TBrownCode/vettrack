@@ -1,8 +1,8 @@
-// src/services/patientService.js - Complete file with minimal soft delete changes
+// src/services/patientService.js - Updated for multi-clinic compatibility
 import { supabase } from '../lib/supabase';
 import { uploadPhotoFromDataURL } from './photoService';
 
-// Get all patients (only non-deleted for staff) - UPDATED
+// Get all patients (only non-deleted for staff)
 export const getPatients = async () => {
   try {
     const { data, error } = await supabase
@@ -69,7 +69,7 @@ export const getPatientById = async (id) => {
   }
 };
 
-// NEW: Get patient by ID for owners (allows viewing during grace period)
+// Get patient by ID for owners (allows viewing during grace period)
 export const getPatientByIdForOwner = async (id) => {
   try {
     const { data, error } = await supabase
@@ -88,7 +88,8 @@ export const getPatientByIdForOwner = async (id) => {
     const now = new Date();
     const deletionExpires = data.deletion_expires_at ? new Date(data.deletion_expires_at) : null;
     const isInGracePeriod = data.is_deleted && deletionExpires && deletionExpires > now;
-    const timeRemaining = isInGracePeriod ? Math.ceil((deletionExpires - now) / (1000 * 60 * 60)) : 0;
+    const timeRemaining = isInGracePeriod ? 
+      Math.ceil((deletionExpires - now) / (1000 * 60 * 60)) : 0;
 
     // Transform data to match your existing format
     return {
@@ -103,46 +104,31 @@ export const getPatientByIdForOwner = async (id) => {
       photoUrl: data.photo_url,
       lastUpdate: new Date(data.updated_at).toLocaleTimeString(),
       isDeleted: data.is_deleted,
-      deletedAt: data.deleted_at,
-      deletionExpiresAt: data.deletion_expires_at,
-      isInGracePeriod,
-      timeRemaining
+      isInGracePeriod: isInGracePeriod,
+      timeRemaining: timeRemaining
     };
   } catch (error) {
-    console.error('Error fetching patient for owner:', error);
+    console.error('Error fetching patient:', error);
     throw error;
   }
 };
 
-// Get patient status history with photos
+// Get patient status history
 export const getPatientStatusHistory = async (patientId) => {
   try {
     const { data, error } = await supabase
       .from('status_history')
-      .select(`
-        *,
-        status_photos (
-          id,
-          photo_url,
-          created_at
-        )
-      `)
+      .select('*')
       .eq('patient_id', patientId)
       .order('changed_at', { ascending: false });
 
     if (error) throw error;
 
-    // Transform to match timeline format
     return data.map(entry => ({
       id: entry.id,
       title: entry.new_status,
-      description: getStatusDescription(entry.new_status),
-      timestamp: new Date(entry.changed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      date: new Date(entry.changed_at).toLocaleDateString(),
-      status: 'completed',
-      hasPhoto: entry.status_photos && entry.status_photos.length > 0,
-      photos: entry.status_photos || [],
-      hasEducationalContent: true,
+      time: new Date(entry.changed_at).toLocaleTimeString(),
+      photoUrl: entry.photo_url,
       changedBy: entry.changed_by
     }));
   } catch (error) {
@@ -151,79 +137,64 @@ export const getPatientStatusHistory = async (patientId) => {
   }
 };
 
-// Helper function to get status descriptions
-const getStatusDescription = (status) => {
-  const descriptions = {
-    'Admitted': 'Your pet has arrived and is being settled in',
-    'Being Examined': 'Initial examination and assessment',
-    'Awaiting Tests': 'Waiting for diagnostic tests or results',
-    'Test Results Pending': 'Tests completed, waiting for results',
-    'Being Prepped for Surgery': 'Preparing for the surgical procedure',
-    'In Surgery': 'Surgical procedure in progress',
-    'In Recovery': 'Surgery complete, recovering comfortably',
-    'Awake & Responsive': 'Alert and responding well to treatment',
-    'Ready for Discharge': 'All set to go home!',
-    'Discharged': 'Successfully discharged and on the way home'
-  };
-  return descriptions[status] || 'Status updated';
-};
-
-// Update patient status with history tracking
-export const updatePatientStatus = async (id, newStatus) => {
+// Update patient status
+export const updatePatientStatus = async (patientId, newStatus, photoUrl = null) => {
   try {
-    // First, get the current status
+    // Get current patient data
     const { data: currentPatient, error: fetchError } = await supabase
       .from('patients')
       .select('status')
-      .eq('id', id)
+      .eq('id', patientId)
       .single();
 
     if (fetchError) throw fetchError;
 
-    const oldStatus = currentPatient.status;
-
-    // Update the patient status
-    const { data, error } = await supabase
+    // Update patient status
+    const { data, error: updateError } = await supabase
       .from('patients')
       .update({ 
-        status: newStatus, 
+        status: newStatus,
         updated_at: new Date().toISOString() 
       })
-      .eq('id', id)
+      .eq('id', patientId)
       .select()
       .single();
 
-    if (error) throw error;
+    if (updateError) throw updateError;
 
-    // Save the status change to history
+    // Add to status history
     const { error: historyError } = await supabase
       .from('status_history')
       .insert({
-        patient_id: id,
-        old_status: oldStatus,
+        patient_id: patientId,
+        old_status: currentPatient.status,
         new_status: newStatus,
-        changed_by: 'Staff User'
+        changed_by: 'Staff User',
+        photo_url: photoUrl
       });
 
     if (historyError) {
-      console.error('Error saving status history:', historyError);
+      console.error('Error creating status history:', historyError);
     }
 
-    return data;
+    return {
+      success: true,
+      message: `Status updated to "${newStatus}" successfully`
+    };
   } catch (error) {
     console.error('Error updating patient status:', error);
     throw error;
   }
 };
 
-// Add photo to a specific status
-export const addStatusPhoto = async (patientId, status, photoData) => {
+// Add status photo
+export const addStatusPhoto = async (patientId, status, photoDataUrl) => {
   try {
-    // Upload photo to storage
-    const photoUrl = await uploadPhotoFromDataURL(photoData, `${patientId}-${status}-${Date.now()}`);
+    // Upload photo and get URL
+    const photoUrl = await uploadPhotoFromDataURL(photoDataUrl, `${patientId}-${Date.now()}`);
 
-    // Find the most recent status history entry for this status
-    const { data: statusEntry, error: fetchError } = await supabase
+    // Get the most recent status history entry for this patient and status
+    const { data: statusEntry, error: statusError } = await supabase
       .from('status_history')
       .select('id')
       .eq('patient_id', patientId)
@@ -232,13 +203,10 @@ export const addStatusPhoto = async (patientId, status, photoData) => {
       .limit(1)
       .single();
 
-    if (fetchError) {
-      console.error('Error finding status entry:', fetchError);
-      throw new Error('Could not find status entry to attach photo to');
-    }
+    if (statusError) throw statusError;
 
     // Add photo to status_photos table
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('status_photos')
       .insert({
         status_history_id: statusEntry.id,
@@ -302,15 +270,19 @@ export const deleteStatusPhotos = async (patientId, status) => {
   }
 };
 
-// Add new patient with initial status history
+// Add new patient with initial status history - UPDATED FOR MULTI-CLINIC
 export const addPatient = async (patientData) => {
   try {
-    // Get clinic ID (for now, we'll use the test clinic)
+    // FIXED: Get clinic ID generically instead of hardcoding clinic name
     const { data: clinic } = await supabase
       .from('clinics')
       .select('id')
-      .eq('name', 'Happy Paws Veterinary Clinic')
+      .limit(1)  // Just get the first (and only) clinic in this database
       .single();
+
+    if (!clinic) {
+      throw new Error('No clinic found in this database');
+    }
 
     let photoUrl = null;
     
@@ -332,6 +304,7 @@ export const addPatient = async (patientData) => {
       owner_email: patientData.email || null,
       status: patientData.status || 'Admitted',
       photo_url: photoUrl,
+      public_token: patientData.id // Use the same ID as public token for simplicity
     };
 
     const { data, error } = await supabase
@@ -375,7 +348,7 @@ export const addPatient = async (patientData) => {
   }
 };
 
-// UPDATED: Soft delete patient with 24-hour grace period
+// Soft delete patient with 24-hour grace period
 export const deletePatient = async (id) => {
   try {
     // Soft delete: mark as deleted with 24-hour grace period
@@ -418,6 +391,37 @@ export const updatePatientPhoto = async (id, photoData) => {
 
     if (error) throw error;
 
+    return {
+      success: true,
+      photoUrl: photoUrl,
+      message: 'Photo updated successfully'
+    };
+  } catch (error) {
+    console.error('Error updating patient photo:', error);
+    throw error;
+  }
+};
+
+// Update patient information
+export const updatePatient = async (id, patientData) => {
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .update({
+        name: patientData.name,
+        species: patientData.species,
+        breed: patientData.breed || '',
+        owner_name: patientData.owner,
+        owner_phone: patientData.phone,
+        owner_email: patientData.email || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
     // Transform back to your format
     return {
       id: data.id,
@@ -432,7 +436,222 @@ export const updatePatientPhoto = async (id, photoData) => {
       lastUpdate: new Date(data.updated_at).toLocaleTimeString()
     };
   } catch (error) {
-    console.error('Error updating photo:', error);
+    console.error('Error updating patient:', error);
+    throw error;
+  }
+};
+
+// Get status options from clinic_statuses table
+export const getAllStatusOptions = async () => {
+  try {
+    // UPDATED: Get clinic generically instead of hardcoding
+    const { data: clinic } = await supabase
+      .from('clinics')
+      .select('id')
+      .limit(1)
+      .single();
+
+    if (!clinic) {
+      // Fallback to default statuses if no clinic found
+      return [
+        { value: 'Admitted', label: 'Admitted', color: '#ffc107' },
+        { value: 'Being Examined', label: 'Being Examined', color: '#17a2b8' },
+        { value: 'In Surgery', label: 'In Surgery', color: '#dc3545' },
+        { value: 'Recovery', label: 'Recovery', color: '#fd7e14' },
+        { value: 'Ready for Pickup', label: 'Ready for Pickup', color: '#28a745' }
+      ];
+    }
+
+    const { data, error } = await supabase
+      .from('clinic_statuses')
+      .select('*')
+      .eq('clinic_id', clinic.id)
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+
+    return data.map(status => ({
+      value: status.name,
+      label: status.name,
+      color: status.color,
+      description: status.description
+    }));
+  } catch (error) {
+    console.error('Error fetching status options:', error);
+    // Return default statuses as fallback
+    return [
+      { value: 'Admitted', label: 'Admitted', color: '#ffc107' },
+      { value: 'Being Examined', label: 'Being Examined', color: '#17a2b8' },
+      { value: 'In Surgery', label: 'In Surgery', color: '#dc3545' },
+      { value: 'Recovery', label: 'Recovery', color: '#fd7e14' },
+      { value: 'Ready for Pickup', label: 'Ready for Pickup', color: '#28a745' }
+    ];
+  }
+};
+
+// Get soft deleted patients (for recovery)
+export const getSoftDeletedPatients = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .select(`
+        *,
+        clinic:clinics(name)
+      `)
+      .eq('is_deleted', true)
+      .order('deleted_at', { ascending: false });
+
+    if (error) throw error;
+
+    return data.map(patient => {
+      const deletionExpires = patient.deletion_expires_at ? new Date(patient.deletion_expires_at) : null;
+      const now = new Date();
+      const timeRemaining = deletionExpires && deletionExpires > now ? 
+        Math.ceil((deletionExpires - now) / (1000 * 60 * 60)) : 0;
+
+      return {
+        id: patient.id,
+        name: patient.name,
+        species: patient.species,
+        breed: patient.breed || '',
+        owner: patient.owner_name,
+        phone: patient.owner_phone,
+        email: patient.owner_email,
+        status: patient.status,
+        photoUrl: patient.photo_url,
+        deletedAt: new Date(patient.deleted_at).toLocaleString(),
+        expiresAt: deletionExpires ? deletionExpires.toLocaleString() : null,
+        timeRemaining: timeRemaining,
+        canRecover: timeRemaining > 0
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching soft deleted patients:', error);
+    throw error;
+  }
+};
+
+// Restore a soft deleted patient
+export const restorePatient = async (id) => {
+  try {
+    const { error } = await supabase
+      .from('patients')
+      .update({
+        is_deleted: false,
+        deleted_at: null,
+        deletion_expires_at: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    
+    return { 
+      success: true, 
+      message: 'Patient restored successfully' 
+    };
+  } catch (error) {
+    console.error('Error restoring patient:', error);
+    throw error;
+  }
+};
+
+// Permanently delete a patient
+export const permanentlyDeletePatient = async (id) => {
+  try {
+    // Delete status history first (foreign key constraint)
+    const { error: historyError } = await supabase
+      .from('status_history')
+      .delete()
+      .eq('patient_id', id);
+
+    if (historyError) throw historyError;
+
+    // Delete status photos
+    const { error: photosError } = await supabase
+      .from('status_photos')
+      .delete()
+      .eq('patient_id', id);
+
+    if (photosError) throw photosError;
+
+    // Delete patient updates
+    const { error: updatesError } = await supabase
+      .from('patient_updates')
+      .delete()
+      .eq('patient_id', id);
+
+    if (updatesError) throw updatesError;
+
+    // Finally delete the patient
+    const { error } = await supabase
+      .from('patients')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    
+    return { 
+      success: true, 
+      message: 'Patient permanently deleted' 
+    };
+  } catch (error) {
+    console.error('Error permanently deleting patient:', error);
+    throw error;
+  }
+};
+
+// Delete last status update (revert to previous status)
+export const deleteLastStatusUpdate = async (patientId) => {
+  try {
+    // Get status history sorted by most recent first
+    const { data: statusHistory, error: historyError } = await supabase
+      .from('status_history')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('changed_at', { ascending: false })
+      .limit(2);
+
+    if (historyError) throw historyError;
+
+    if (!statusHistory || statusHistory.length < 2) {
+      throw new Error('Cannot revert: Patient must have at least 2 status entries. Use "Clear Status History" to reset to Admitted.');
+    }
+
+    // Get the most recent entry (to delete) and the previous entry (to revert to)
+    const mostRecentEntry = statusHistory[0];
+    const previousEntry = statusHistory[1];
+
+    // Delete the most recent status history entry
+    const { error: deleteError } = await supabase
+      .from('status_history')
+      .delete()
+      .eq('id', mostRecentEntry.id);
+
+    if (deleteError) throw deleteError;
+
+    // Update patient status to the previous status
+    const { error: updateError } = await supabase
+      .from('patients')
+      .update({ 
+        status: previousEntry.new_status,
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', patientId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    return {
+      success: true,
+      message: `Reverted from "${mostRecentEntry.new_status}" back to "${previousEntry.new_status}"`,
+      revertedFrom: mostRecentEntry.new_status,
+      revertedTo: previousEntry.new_status
+    };
+  } catch (error) {
+    console.error('Error deleting last status update:', error);
     throw error;
   }
 };
@@ -474,60 +693,6 @@ export const sendPatientUpdate = async (updateData) => {
   }
 };
 
-// Delete the most recent status update and revert to previous status
-export const deleteLastStatusUpdate = async (patientId) => {
-  try {
-    // Get all status history for this patient, ordered by most recent first
-    const { data: statusHistory, error: fetchError } = await supabase
-      .from('status_history')
-      .select('*')
-      .eq('patient_id', patientId)
-      .order('changed_at', { ascending: false });
-
-    if (fetchError) throw fetchError;
-
-    // Check if there's more than one status entry
-    if (!statusHistory || statusHistory.length <= 1) {
-      throw new Error('Cannot delete the only status entry. Use "Clear Status History" to reset to Admitted.');
-    }
-
-    // Get the most recent entry (to delete) and the previous entry (to revert to)
-    const mostRecentEntry = statusHistory[0];
-    const previousEntry = statusHistory[1];
-
-    // Delete the most recent status history entry
-    const { error: deleteError } = await supabase
-      .from('status_history')
-      .delete()
-      .eq('id', mostRecentEntry.id);
-
-    if (deleteError) throw deleteError;
-
-    // Update patient status to the previous status
-    const { data, error: updateError } = await supabase
-      .from('patients')
-      .update({ 
-        status: previousEntry.new_status,
-        updated_at: new Date().toISOString() 
-      })
-      .eq('id', patientId)
-      .select()
-      .single();
-
-    if (updateError) throw updateError;
-
-    return {
-      success: true,
-      message: `Reverted from "${mostRecentEntry.new_status}" back to "${previousEntry.new_status}"`,
-      revertedFrom: mostRecentEntry.new_status,
-      revertedTo: previousEntry.new_status
-    };
-  } catch (error) {
-    console.error('Error deleting last status update:', error);
-    throw error;
-  }
-};
-
 // Clear patient status history and reset to Admitted
 export const clearPatientStatusHistory = async (patientId) => {
   try {
@@ -540,7 +705,7 @@ export const clearPatientStatusHistory = async (patientId) => {
     if (deleteError) throw deleteError;
 
     // Reset patient status to "Admitted"
-    const { data, error: updateError } = await supabase
+    const { error: updateError } = await supabase
       .from('patients')
       .update({ 
         status: 'Admitted',
