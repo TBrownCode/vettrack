@@ -1,9 +1,10 @@
-// src/pages/ResetPasswordPage.js - Optional reset password page
+// src/pages/ResetPasswordPage.js - Fixed to handle URL hash parameters
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash, faPaw } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import '../styles/LoginForm.css'; // Reuse login form styles
 
 const ResetPasswordPage = () => {
@@ -14,23 +15,62 @@ const ResetPasswordPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isValidLink, setIsValidLink] = useState(false);
   
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { updatePassword } = useAuth();
 
   useEffect(() => {
-    // Check if we have the required tokens from the URL
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    
-    if (!accessToken || !refreshToken) {
-      setError('Invalid reset link. Please request a new password reset.');
-    }
-  }, [searchParams]);
+    // Parse tokens from URL hash (not search params)
+    const handleAuthCallback = async () => {
+      try {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+        
+        console.log('Hash params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+        
+        if (!accessToken || !refreshToken || type !== 'recovery') {
+          setError('Invalid reset link. Please request a new password reset.');
+          return;
+        }
+
+        // Set the session with the tokens from the URL
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+
+        if (error) {
+          console.error('Error setting session:', error);
+          setError('Invalid or expired reset link. Please request a new password reset.');
+          return;
+        }
+
+        console.log('Session set successfully:', data);
+        setIsValidLink(true);
+        
+        // Clear the URL hash for security
+        window.history.replaceState(null, null, window.location.pathname);
+        
+      } catch (error) {
+        console.error('Error handling auth callback:', error);
+        setError('An error occurred processing the reset link.');
+      }
+    };
+
+    handleAuthCallback();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!isValidLink) {
+      setError('Invalid reset link. Please request a new password reset.');
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
@@ -52,12 +92,16 @@ const ResetPasswordPage = () => {
       
       setSuccess('Password updated successfully! Redirecting to login...');
       
+      // Sign out to ensure clean state
+      await supabase.auth.signOut();
+      
       // Redirect to login after 3 seconds
       setTimeout(() => {
         navigate('/', { replace: true });
       }, 3000);
       
     } catch (error) {
+      console.error('Password update error:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -88,11 +132,13 @@ const ResetPasswordPage = () => {
                 required
                 placeholder="Enter your new password"
                 minLength="6"
+                disabled={!isValidLink}
               />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
+                disabled={!isValidLink}
               >
                 <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
               </button>
@@ -110,11 +156,13 @@ const ResetPasswordPage = () => {
                 required
                 placeholder="Confirm your new password"
                 minLength="6"
+                disabled={!isValidLink}
               />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                disabled={!isValidLink}
               >
                 <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
               </button>
@@ -124,7 +172,7 @@ const ResetPasswordPage = () => {
           <button
             type="submit"
             className="login-button"
-            disabled={loading || !!error}
+            disabled={loading || !isValidLink}
           >
             {loading ? 'Updating...' : 'Update Password'}
           </button>

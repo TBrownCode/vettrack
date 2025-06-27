@@ -1,4 +1,4 @@
-// src/App.js - Updated with Clinic Selector
+// src/App.js - Updated with Reset Password route
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import PatientDetail from './pages/PatientDetail';
 import PatientStatusTracker from './pages/PatientStatusTracker';
+import ResetPasswordPage from './pages/ResetPasswordPage'; // Add this import
 import HeaderDropdownMenu from './components/HeaderDropdownMenu';
 import ClinicSelector from './components/ClinicSelector';
 import StatusManagement from './components/StatusManagement';
@@ -30,6 +31,9 @@ function App() {
           <Routes>
             {/* Public route for owner status tracking */}
             <Route path="/status/:id" element={<PatientStatusTracker />} />
+            
+            {/* Public route for password reset */}
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             
             {/* Protected routes for staff */}
             <Route path="/" element={
