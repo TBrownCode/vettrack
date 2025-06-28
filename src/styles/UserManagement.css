@@ -1,4 +1,4 @@
-/* src/styles/UserManagement.css */
+/* src/styles/UserManagement.css - Enhanced with user list styles */
 .user-management-modal {
   position: fixed;
   top: 0;
@@ -17,7 +17,7 @@
   background: white;
   border-radius: 12px;
   width: 100%;
-  max-width: 500px;
+  max-width: 700px; /* Increased width for user list */
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -161,24 +161,288 @@
   justify-content: center;
   gap: 8px;
   border-bottom: 2px solid transparent;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .tab-button:hover {
-  background-color: #f5f5f5;
+  background-color: #f8f9fa;
+  color: #333;
 }
 
 .tab-button.active {
   color: var(--primary-color);
   border-bottom-color: var(--primary-color);
-  background-color: #f8f9ff;
+  background-color: #f8f9fa;
 }
 
-/* NEW STYLES for User Info tab */
+/* User List Styles */
+.user-list-container {
+  padding: 24px;
+}
+
+.user-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.user-list-header h4 {
+  margin: 0;
+  color: #333;
+}
+
+.refresh-button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+
+.refresh-button:hover {
+  background-color: #3367d6;
+}
+
+.refresh-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.user-card {
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #fff;
+  transition: box-shadow 0.2s ease;
+}
+
+.user-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-card.current-user {
+  border-color: var(--primary-color);
+  background-color: #f8f9fa;
+}
+
+.user-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.user-basic-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-user-badge {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.user-email {
+  color: #666;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-role-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.user-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.user-metadata {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.metadata-item {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.metadata-item strong {
+  color: #333;
+}
+
+.user-actions {
+  flex-shrink: 0;
+}
+
+.delete-user-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid #d32f2f;
+  background-color: white;
+  color: #d32f2f;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.delete-user-button:hover {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.delete-user-button.disabled {
+  border-color: #ccc;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.delete-user-button.disabled:hover {
+  background-color: white;
+  color: #ccc;
+}
+
+/* Confirmation Modal */
+.confirmation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.confirmation-modal {
+  background: white;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  margin: 20px;
+}
+
+.confirmation-header {
+  padding: 20px 20px 0 20px;
+}
+
+.confirmation-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.confirmation-body {
+  padding: 16px 20px;
+}
+
+.confirmation-body p {
+  margin: 0 0 12px 0;
+  color: #333;
+  line-height: 1.4;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 0 20px 20px 20px;
+}
+
+.confirmation-actions .cancel-button {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.confirmation-actions .delete-button {
+  background-color: #d32f2f;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.confirmation-actions .delete-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* User Info Tab Styles */
 .user-info-container {
   padding: 24px;
-  max-height: 400px;
-  overflow-y: auto;
 }
 
 .info-section {
@@ -193,15 +457,32 @@
 
 .info-section h4 {
   margin: 0 0 12px 0;
-  color: var(--primary-color);
-  font-size: 1rem;
+  color: #333;
 }
 
-.current-user-info p,
-.management-info p {
-  margin: 8px 0;
-  font-size: 0.9rem;
+.current-user-info {
+  background-color: #f8f9fa;
+  padding: 16px;
+  border-radius: 6px;
+}
+
+.current-user-info p {
+  margin: 0 0 8px 0;
   color: #333;
+}
+
+.current-user-info p:last-child {
+  margin-bottom: 0;
+}
+
+.management-info p {
+  margin: 0 0 8px 0;
+  color: #333;
+  line-height: 1.4;
+}
+
+.management-info p:last-child {
+  margin-bottom: 0;
 }
 
 .dashboard-link {
@@ -209,11 +490,11 @@
   color: var(--primary-color);
   text-decoration: none;
   font-weight: 500;
-  padding: 8px 12px;
+  padding: 8px 16px;
   border: 1px solid var(--primary-color);
-  border-radius: 4px;
+  border-radius: 6px;
   margin-top: 8px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .dashboard-link:hover {
@@ -221,22 +502,34 @@
   color: white;
 }
 
-@media (max-width: 480px) {
-  .user-management-form {
-    padding: 16px;
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .user-management-card {
+    max-width: 100%;
+    margin: 10px;
   }
   
-  .form-buttons {
+  .user-card-body {
     flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
   
-  .cancel-button,
-  .create-button {
+  .user-metadata {
+    grid-template-columns: 1fr;
+  }
+  
+  .user-actions {
+    align-self: stretch;
+  }
+  
+  .delete-user-button {
     width: 100%;
+    justify-content: center;
   }
   
   .tab-button {
     font-size: 0.8rem;
-    padding: 12px;
+    padding: 12px 8px;
   }
 }
