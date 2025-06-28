@@ -1,4 +1,4 @@
-// src/pages/PatientDetail.js - Complete file with management buttons removed
+// src/pages/PatientDetail.js - Complete file with patient ID in header
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,7 +18,7 @@ import {
   faTimes, 
   faEllipsisV,
   faCog,
-  faShieldAlt // Icon for protected statuses
+  faShieldAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { getPatientById, updatePatientStatus, deletePatient, sendPatientUpdate, clearPatientStatusHistory, deleteLastStatusUpdate, addStatusPhoto, deleteStatusPhotos } from '../services/patientService';
 import { getAllStatusOptions } from '../services/statusService';
@@ -272,34 +272,32 @@ const PatientDetail = () => {
     }
   };
 
-  const handleDeleteStatusPhotos = async () => {
-    if (window.confirm(`Are you sure you want to delete all photos from ${patient.name}'s current status "${patient.status}"? This cannot be undone.`)) {
-      try {
-        setLoading(true);
-        const result = await deleteStatusPhotos(id, patient.status);
-        
-        alert(`Success! ${result.message}`);
-      } catch (error) {
-        console.error('Error deleting status photos:', error);
-        alert('Failed to delete photos: ' + (error.message || 'Unknown error'));
-      } finally {
-        setLoading(false);
-      }
+  const handleToggleStatusMenu = () => {
+    setShowStatusMenu(!showStatusMenu);
+  };
+
+  const handleProfilePhotoClick = () => {
+    if (patient.photoUrl) {
+      setShowPhotoModal(true);
+    } else {
+      handleTakePhoto('profile');
     }
   };
 
   const handleViewStatusTracker = () => {
-    const statusUrl = `${window.location.origin}/status/${id}`;
-    window.open(statusUrl, '_blank');
+    // Open status tracker in new tab
+    const trackerUrl = `${window.location.origin}/track/${patient.id}`;
+    window.open(trackerUrl, '_blank');
   };
 
   const handleCopyStatusLink = async () => {
-    const statusUrl = `${window.location.origin}/status/${id}`;
+    const statusUrl = `${window.location.origin}/track/${patient.id}`;
     try {
       await navigator.clipboard.writeText(statusUrl);
-      alert('Status tracking link copied to clipboard! You can share this with the pet owner.');
+      alert('Status tracking link copied to clipboard!');
     } catch (error) {
       console.error('Failed to copy link:', error);
+      // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = statusUrl;
       document.body.appendChild(textArea);
@@ -310,73 +308,9 @@ const PatientDetail = () => {
     }
   };
 
-  const handleProfilePhotoClick = (e) => {
-    if (e.target.closest('.photo-overlay-button')) {
-      return;
-    }
-    setShowPhotoModal(true);
-  };
-
-  const handleClosePhotoModal = () => {
-    setShowPhotoModal(false);
-  };
-
-  const handleToggleStatusMenu = () => {
-    setShowStatusMenu(!showStatusMenu);
-  };
-
-  // Close status menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showStatusMenu && !event.target.closest('.status-menu-container')) {
-        setShowStatusMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showStatusMenu]);
-
-  // Close status dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showStatusDropdown && !event.target.closest('.status-dropdown-container')) {
-        setShowStatusDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showStatusDropdown]);
-
-  // Handle both default and custom status styling
-  const getStatusStyle = (status) => {
-    // First check if it's a default status
-    const defaultStatusCSSMap = {
-      'Admitted': 'status-admitted',
-      'Being Examined': 'status-being-examined',
-      'Awaiting Tests': 'status-awaiting-tests', 
-      'Test Results Pending': 'status-test-results-pending',
-      'Being Prepped for Surgery': 'status-being-prepped-for-surgery',
-      'In Surgery': 'status-in-surgery',
-      'In Recovery': 'status-in-recovery',
-      'Awake & Responsive': 'status-awake-responsive', 
-      'Ready for Discharge': 'status-ready-for-discharge',
-      'Discharged': 'status-discharged'
-    };
-    
-    // If it's a default status, use the predefined CSS class
-    if (defaultStatusCSSMap[status]) {
-      return defaultStatusCSSMap[status];
-    }
-    
-    // For custom statuses, return a special class name
-    return 'status-custom';
-  };
-
-  // Get current status color from statusOptions
+  // Get current status color
   const getCurrentStatusColor = () => {
-    const statusOption = statusOptions.find(opt => opt.value === patient?.status);
+    const statusOption = statusOptions.find(opt => opt.value === patient.status);
     return statusOption ? statusOption.color : '#5f6368';
   };
 
@@ -424,6 +358,7 @@ const PatientDetail = () => {
         </div>
         <div className="patient-header-info">
           <h2 className="patient-name-large">{patient.name}</h2>
+          <p className="patient-id-detail">{patient.id}</p>
           <p className="patient-species">{patient.breed} {patient.species}</p>
           <p className="patient-owner-info">Owner: {patient.owner}</p>
           <p className="patient-owner-info">Phone: {patient.phone}</p>
@@ -462,78 +397,56 @@ const PatientDetail = () => {
                   }}
                 >
                   <FontAwesomeIcon icon={faHistory} />
-                  Clear Status History
-                </button>
-                <button 
-                  className="status-menu-item"
-                  onClick={() => {
-                    handleDeleteStatusPhotos();
-                    setShowStatusMenu(false);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faImages} />
-                  Delete Photos from Current Status
+                  Clear History
                 </button>
               </div>
             )}
           </div>
         </div>
+        
         <div className="status-dropdown-container">
           <button 
             className="status-dropdown-button"
             onClick={() => setShowStatusDropdown(!showStatusDropdown)}
           >
-            <span 
-              className={`status-badge ${getStatusStyle(patient.status)}`}
-              style={isCustomStatus(patient.status) ? {
+            <div 
+              className="status-badge"
+              style={{
                 backgroundColor: getCurrentStatusBgColor(),
                 color: getCurrentStatusColor()
-              } : {}}
+              }}
             >
               {patient.status}
-              {/* Add protection indicator close to the end of text */}
-              {requiresProtection(patient.status) && (
-                <FontAwesomeIcon 
-                  icon={faShieldAlt} 
-                  style={{ marginLeft: '4px', fontSize: '0.8em' }}
-                  title={getProtectionDescription(patient.status)}
-                />
+              {isCustomStatus(patient.status) && (
+                <span style={{ marginLeft: '8px', opacity: 0.7 }}>
+                  (Custom)
+                </span>
               )}
-            </span>
+            </div>
             <FontAwesomeIcon icon={faChevronDown} />
           </button>
           
           {showStatusDropdown && (
             <div className="status-options-dropdown">
               {statusLoading ? (
-                <div style={{ padding: '12px', textAlign: 'center', color: '#666' }}>
-                  Loading statuses...
-                </div>
+                <div className="status-option loading">Loading statuses...</div>
               ) : (
-                statusOptions.map(status => (
-                  <button 
-                    key={status.value} 
+                statusOptions.map((option) => (
+                  <button
+                    key={option.value}
                     className="status-option"
-                    onClick={() => handleStatusChange(status.value)}
+                    onClick={() => handleStatusChange(option.value)}
+                    style={{
+                      borderLeft: `4px solid ${option.color}`
+                    }}
                   >
                     <div className="status-option-main">
-                      {status.value === patient.status && (
-                        <FontAwesomeIcon icon={faCheck} className="status-selected-icon" />
-                      )}
-                      <span style={{ color: status.color, marginRight: '8px', fontSize: '18px' }}>●</span>
-                      
-                      <span>{status.label}</span>
-                      
-                      {/* Add protection indicator close to the end of text */}
-                      {requiresProtection(status.value) && (
+                      <span>{option.label}</span>
+                      {requiresProtection(option.value) && (
                         <FontAwesomeIcon 
                           icon={faShieldAlt} 
-                          style={{ 
-                            color: '#ff9800', 
-                            marginLeft: '4px', 
-                            fontSize: '12px' 
-                          }}
-                          title={getProtectionDescription(status.value)}
+                          style={{ color: '#ea4335' }}
+                          title={getProtectionDescription(option.value)}
                         />
                       )}
                     </div>
@@ -543,7 +456,10 @@ const PatientDetail = () => {
             </div>
           )}
         </div>
-        <p className="last-updated">Last updated: {patient.lastUpdate}</p>
+        
+        <div className="status-update-info">
+          <p>Last updated: {patient.lastUpdate}</p>
+        </div>
       </div>
 
       <div className="action-buttons">
@@ -596,7 +512,7 @@ const PatientDetail = () => {
         </button>
       </div>
       
-      {/* FIXED: Simple Status Protection Dialog */}
+      {/* Status Protection Dialog */}
       <StatusProtectionDialog
         isOpen={protectionDialog.isOpen}
         status={protectionDialog.status}
@@ -605,21 +521,25 @@ const PatientDetail = () => {
         onConfirm={protectionDialog.onConfirm}
         onCancel={protectionDialog.onCancel}
       />
-      
+
+      {/* Camera component */}
       {showCamera && (
         <SimpleCameraCapture
           onCapture={handleCapturePhoto}
           onClose={() => setShowCamera(false)}
+          mode={cameraMode}
         />
       )}
-      
+
+      {/* QR Code Generator */}
       {showQRCode && (
-        <QRCodeGenerator 
+        <QRCodeGenerator
           patient={patient}
           onClose={() => setShowQRCode(false)}
         />
       )}
-      
+
+      {/* Send Update Form */}
       {showSendUpdate && (
         <SendUpdateForm
           patient={patient}
@@ -627,27 +547,33 @@ const PatientDetail = () => {
           onClose={() => setShowSendUpdate(false)}
         />
       )}
-      
+
+      {/* Update Confirmation */}
       {showConfirmation && (
         <UpdateConfirmation
-          onDismiss={() => setShowConfirmation(false)}
+          patient={patient}
+          onClose={() => setShowConfirmation(false)}
         />
       )}
 
+      {/* Photo Modal */}
       {showPhotoModal && (
-        <div className="photo-modal" onClick={handleClosePhotoModal}>
+        <div className="photo-modal" onClick={() => setShowPhotoModal(false)}>
           <div className="photo-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="photo-modal-close" onClick={handleClosePhotoModal}>
+            <button 
+              className="photo-modal-close"
+              onClick={() => setShowPhotoModal(false)}
+            >
               <FontAwesomeIcon icon={faTimes} />
             </button>
             <img 
-              src={patient.photoUrl || '/images/placeholder-pet.png'} 
+              src={patient.photoUrl} 
               alt={patient.name}
               className="photo-modal-image"
             />
             <div className="photo-modal-caption">
               <h3>{patient.name}</h3>
-              <p>{patient.species} • {patient.breed}</p>
+              <p>{patient.breed} {patient.species}</p>
             </div>
           </div>
         </div>

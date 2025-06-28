@@ -1,4 +1,4 @@
-/* src/styles/PatientCard.css - Updated to use dynamic status colors */
+/* src/styles/PatientCard.css - Updated to include patient ID styling */
 .patient-card {
     background-color: var(--surface-color);
     border-radius: 8px;
@@ -43,6 +43,15 @@
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
+  }
+  
+  .patient-id {
+    margin: 0 0 4px 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .patient-breed, .patient-owner {

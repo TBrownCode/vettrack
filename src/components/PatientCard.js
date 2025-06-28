@@ -1,4 +1,4 @@
-// src/components/PatientCard.js - Updated with dynamic status colors
+// src/components/PatientCard.js - Updated with dynamic status colors and patient ID display
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
@@ -86,6 +86,7 @@ const PatientCard = ({ patient, onClick, onDelete }) => {
       </div>
       <div className="patient-info">
         <h3 className="patient-name">{patient.name}</h3>
+        <p className="patient-id">{patient.id}</p>
         <p className="patient-breed">{patient.species} • {patient.breed}</p>
         <p className="patient-owner">Owner: {patient.owner}</p>
         <div 
