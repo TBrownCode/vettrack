@@ -33,18 +33,26 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         if (isMobile) {
-          // Mobile device - use rear camera
+          // Mobile device - use rear camera with high quality
           constraints = {
             audio: false,
-            video: { facingMode: 'environment' }
+            video: { 
+              facingMode: 'environment',
+              width: { ideal: 1920, min: 1280 },
+              height: { ideal: 1080, min: 720 },
+              frameRate: { ideal: 30, min: 15 },
+              aspectRatio: { ideal: 16/9 }
+            }
           };
         } else {
-          // Desktop - use any available camera (likely webcam)
+          // Desktop - use highest quality webcam settings
           constraints = {
             audio: false,
             video: {
-              width: { ideal: 1280, min: 640 },
-              height: { ideal: 720, min: 480 }
+              width: { ideal: 1920, min: 1280 },
+              height: { ideal: 1080, min: 720 },
+              frameRate: { ideal: 30, min: 15 },
+              aspectRatio: { ideal: 16/9 }
             }
           };
         }
@@ -202,20 +210,28 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       
-      // Get the actual video dimensions
-      const videoWidth = video.videoWidth || 640;
-      const videoHeight = video.videoHeight || 480;
+      // Get the actual video dimensions for maximum quality
+      const videoWidth = video.videoWidth || 1920;
+      const videoHeight = video.videoHeight || 1080;
       
       console.log(`SimpleCameraCapture: Taking photo with dimensions ${videoWidth}x${videoHeight}`);
       
+      // Set canvas to exact video dimensions (no scaling down)
       canvas.width = videoWidth;
       canvas.height = videoHeight;
       
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       
-      const imageData = canvas.toDataURL('image/jpeg', 0.9);
-      console.log('SimpleCameraCapture: Photo captured successfully');
+      // High-quality canvas rendering settings
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      // Draw the current video frame at full resolution
+      ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+      
+      // Convert to high-quality JPEG (0.95 quality instead of 0.9)
+      const imageData = canvas.toDataURL('image/jpeg', 0.95);
+      console.log('SimpleCameraCapture: High-quality photo captured successfully');
       onCapture(imageData);
     } catch (err) {
       console.error('SimpleCameraCapture: Error taking photo:', err);
