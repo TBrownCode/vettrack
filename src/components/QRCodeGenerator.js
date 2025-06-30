@@ -29,7 +29,7 @@ const QRCodeGenerator = ({ patient, onClose }) => {
       setLoading(true);
       
       // Create QR code content - you can customize this
-      const qrContent = `VETTRACK:${patient.id}`;
+      const qrContent = `INPAWGRESS:${patient.id}`;
       
       // Generate QR code as data URL
       const dataUrl = await QRCode.toDataURL(qrContent, {
@@ -58,7 +58,7 @@ const QRCodeGenerator = ({ patient, onClose }) => {
     const printContent = `
       <html>
         <head>
-          <title>VetTrack Patient QR Code</title>
+          <title>InPawgress Patient QR Code</title>
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -116,7 +116,7 @@ const QRCodeGenerator = ({ patient, onClose }) => {
               <img src="${qrUrl}" alt="Patient QR Code" width="${qrSize}" height="${qrSize}">
             </div>
             <div class="clinic-info">
-              <p>VetTrack Patient Tracking</p>
+              <p>InPawgress Patient Tracking</p>
             </div>
           </div>
         </body>

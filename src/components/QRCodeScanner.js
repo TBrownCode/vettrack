@@ -159,9 +159,9 @@ const QRCodeScanner = ({ onScan, onClose }) => {
             console.log('QR code detected:', code.data);
             
             // Check if it's our app's QR code
-            if (code.data.startsWith('VETTRACK:')) {
+            if (code.data.startsWith('INPAWGRESS:')) {
               // Extract patient ID from QR code
-              const patientId = code.data.replace('VETTRACK:', '');
+              const patientId = code.data.replace('INPAWGRESS:', '');
               
               // Stop scanning and close camera
               stopScanning();
