@@ -28,16 +28,22 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
           }
         }, 10000); // 10 second timeout
         
-        // Try different constraint strategies based on device type
-        let constraints;
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Enhanced device detection including iPad
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                        (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
         
+        console.log('SimpleCameraCapture: User Agent:', navigator.userAgent);
+        console.log('SimpleCameraCapture: Platform:', navigator.platform);
+        console.log('SimpleCameraCapture: Touch Points:', navigator.maxTouchPoints);
+        console.log('SimpleCameraCapture: Detected as mobile:', isMobile);
+        
+        let constraints;
         if (isMobile) {
-          // Mobile device - use rear camera with high quality
+          // Mobile device (including iPad) - use rear camera with high quality
           constraints = {
             audio: false,
             video: { 
-              facingMode: 'environment',
+              facingMode: 'environment',  // Force back camera
               width: { ideal: 1920, min: 1280 },
               height: { ideal: 1080, min: 720 },
               frameRate: { ideal: 30, min: 15 },
