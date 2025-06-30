@@ -1,4 +1,4 @@
-// src/components/QRCodeScanner.js - Improved Version
+// src/components/QRCodeScanner.js - Enhanced Version with Navigation Cleanup
 import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faQrcode } from '@fortawesome/free-solid-svg-icons';
@@ -14,7 +14,7 @@ const QRCodeScanner = ({ onScan, onClose }) => {
   const [videoReady, setVideoReady] = useState(false);
   const scanIntervalRef = useRef(null);
   
-  // Start camera when component mounts
+  // ENHANCED: Add cleanup for navigation events
   useEffect(() => {
     let mounted = true;
     
@@ -32,6 +32,9 @@ const QRCodeScanner = ({ onScan, onClose }) => {
         
         if (mounted) {
           setStream(mediaStream);
+        } else {
+          // If component was unmounted during init, cleanup immediately
+          mediaStream.getTracks().forEach(track => track.stop());
         }
       } catch (err) {
         console.error('Error accessing camera:', err);
@@ -43,12 +46,48 @@ const QRCodeScanner = ({ onScan, onClose }) => {
     
     initCamera();
     
-    return () => {
+    // ENHANCED: Cleanup function that handles both React unmount and navigation
+    const cleanup = () => {
+      console.log('QRCodeScanner: Performing cleanup');
       mounted = false;
       stopScanning();
       stopCamera();
     };
-  }, []);
+    
+    // ENHANCED: Listen for page navigation events
+    const handleBeforeUnload = () => {
+      cleanup();
+    };
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        console.log('QRCodeScanner: Page became hidden, cleaning up camera');
+        cleanup();
+      }
+    };
+    
+    // ENHANCED: Listen for popstate (back/forward navigation)
+    const handlePopState = () => {
+      console.log('QRCodeScanner: Navigation detected, cleaning up camera');
+      cleanup();
+      onClose(); // Close the scanner when navigating
+    };
+    
+    // Add event listeners for navigation cleanup
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      // Remove event listeners
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('popstate', handlePopState);
+      
+      // Perform cleanup
+      cleanup();
+    };
+  }, [onClose]);
   
   // Set up video element after stream is available
   useEffect(() => {
@@ -60,17 +99,17 @@ const QRCodeScanner = ({ onScan, onClose }) => {
       videoRef.current.onloadedmetadata = () => {
         // Wait a little bit before playing to ensure metadata is fully loaded
         setTimeout(() => {
-          if (videoRef.current) {
+          if (videoRef.current && stream) {
             const playPromise = videoRef.current.play();
             
             if (playPromise !== undefined) {
               playPromise
                 .then(() => {
-                  console.log('Video playback started successfully');
+                  console.log('QRCodeScanner: Video playback started successfully');
                   setVideoReady(true);
                 })
                 .catch(err => {
-                  console.error('Error playing video:', err);
+                  console.error('QRCodeScanner: Error playing video:', err);
                   setError('Error starting video: ' + (err.message || 'Unknown error'));
                 });
             }
@@ -90,7 +129,9 @@ const QRCodeScanner = ({ onScan, onClose }) => {
   
   const stopCamera = () => {
     if (stream) {
+      console.log('QRCodeScanner: Stopping camera stream');
       stream.getTracks().forEach(track => {
+        console.log('QRCodeScanner: Stopping track:', track.label);
         track.stop();
       });
       setStream(null);
@@ -105,6 +146,7 @@ const QRCodeScanner = ({ onScan, onClose }) => {
   
   const stopScanning = () => {
     if (scanIntervalRef.current) {
+      console.log('QRCodeScanner: Stopping scan interval');
       clearInterval(scanIntervalRef.current);
       scanIntervalRef.current = null;
     }
@@ -156,7 +198,7 @@ const QRCodeScanner = ({ onScan, onClose }) => {
           
           // If QR code found, process it
           if (code && code.data) {
-            console.log('QR code detected:', code.data);
+            console.log('QRCodeScanner: QR code detected:', code.data);
             
             // Check if it's our app's QR code
             if (code.data.startsWith('INPAWGRESS:')) {
@@ -165,6 +207,7 @@ const QRCodeScanner = ({ onScan, onClose }) => {
               
               // Stop scanning and close camera
               stopScanning();
+              stopCamera();
               
               // Call the onScan callback with the patient ID
               if (onScan) {
@@ -173,7 +216,7 @@ const QRCodeScanner = ({ onScan, onClose }) => {
             }
           }
         } catch (err) {
-          console.error('Error processing frame:', err);
+          console.error('QRCodeScanner: Error processing frame:', err);
           // Continue scanning on error - don't interrupt the process
         }
       }
@@ -181,6 +224,7 @@ const QRCodeScanner = ({ onScan, onClose }) => {
   };
   
   const handleCloseClick = () => {
+    console.log('QRCodeScanner: Close button clicked');
     stopScanning();
     stopCamera();
     onClose();
