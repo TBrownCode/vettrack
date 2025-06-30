@@ -6,7 +6,7 @@
   right: 0;
   bottom: 0;
   background-color: var(--surface-color);
-  z-index: 1001; /* Higher than header dropdown (1000) */
+  z-index: 10002; /* CHANGED: Increased from 1001 to 10002 to be above hamburger dropdown */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -21,7 +21,7 @@
   color: white;
   position: sticky;
   top: 0;
-  z-index: 101; /* Higher than header dropdown */
+  z-index: 10003; /* CHANGED: Increased from 101 to 10003 */
 }
 
 .form-header h2 {
@@ -36,7 +36,7 @@
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
-  z-index: 102; /* Ensure it's above everything */
+  z-index: 10004; /* CHANGED: Increased from 102 to 10004 */
   position: relative;
 }
 
