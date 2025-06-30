@@ -1,4 +1,4 @@
-/* src/styles/QRCodeGenerator.css - Fixed mobile layout */
+/* src/styles/QRCodeGenerator.css - Fixed mobile layout with Z-index fix */
 .qr-code-modal {
   position: fixed;
   top: 0;
@@ -6,7 +6,7 @@
   right: 0;
   bottom: 0;
   background-color: white;
-  z-index: 1000;
+  z-index: 10001; /* FIXED: Increased from 1000 to 10001 to be above hamburger dropdown */
   display: flex;
   flex-direction: column;
 }
