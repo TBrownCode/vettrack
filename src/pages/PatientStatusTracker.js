@@ -453,7 +453,7 @@ const PatientStatusTracker = () => {
   return (
     <div className="status-tracker-container">
       <header className="tracker-header">
-        <h1><FontAwesomeIcon icon={faPaw} /> VetTrack</h1>
+        <h1><FontAwesomeIcon icon={faPaw} /> InPawgress</h1>
       </header>
       
       {/* NEW: Grace Period Banner */}
@@ -552,9 +552,7 @@ const PatientStatusTracker = () => {
       
       {/* Clinic Info */}
       <div className="clinic-info">
-        <p>If you have any questions, please contact us at:</p>
-        <p className="contact">Phone: (555) 123-4567</p>
-        <p className="contact">Email: info@vetclinic.com</p>
+        <p>If you have any questions, please contact your clinic directly.</p>
       </div>
       
       {/* Refresh note - only show if not in grace period */}
@@ -577,7 +575,7 @@ const PatientStatusTracker = () => {
       )}
       
       <footer className="tracker-footer">
-        <p>&copy; 2025 VetTrack • Pet Status Tracking System</p>
+        <p>&copy; 2025 InPawgress • Pet Status Tracking System</p>
       </footer>
     </div>
   );

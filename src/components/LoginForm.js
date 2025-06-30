@@ -116,7 +116,7 @@ const LoginForm = () => {
       <div className="login-card">
         <div className="login-header">
           <FontAwesomeIcon icon={faPaw} className="login-icon" />
-          <h1>VetTrack</h1>
+          <h1>InPawgress</h1>
           <p>Veterinary Patient Tracking System</p>
         </div>
 
