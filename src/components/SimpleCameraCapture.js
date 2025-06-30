@@ -100,7 +100,7 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
       right: 0, 
       bottom: 0, 
       backgroundColor: '#000', 
-      zIndex: 1000,
+      zIndex: 10001,
       display: 'flex',
       flexDirection: 'column'
     }}>
