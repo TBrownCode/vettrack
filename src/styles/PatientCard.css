@@ -9,7 +9,7 @@
     margin-bottom: 12px;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
-    padding-bottom: 32px;
+    padding-bottom: 20px; /* Much more compact - just enough for timestamp */
 }
 
 .patient-card:hover {
@@ -18,8 +18,8 @@
 }
 
 .patient-avatar {
-    width: 56px;
-    height: 56px;
+    width: 78px; /* Increased from 56px (40% bigger) */
+    height: 78px; /* Increased from 56px (40% bigger) */
     border-radius: 50%;
     overflow: hidden;
     margin-right: 12px;
@@ -77,11 +77,23 @@
     font-size: 0.875rem; /* Increased from 0.75rem (about 17% bigger font) */
     font-weight: 500;
     margin-top: 2px; /* Small top margin for better visual separation */
+    margin-left: -11px; /* Negative margin to align text with other elements */
     align-self: flex-start; /* Ensure it doesn't stretch to full width */
     /* Colors will be applied via inline styles from JavaScript */
 }
 
-/* Options button positioning */
+/* Time positioning - back to bottom right but with less padding */
+.patient-time {
+    position: absolute;
+    bottom: 4px; /* Moved closer to bottom edge */
+    right: 12px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+/* Options button positioning - adjusted to avoid timestamp conflict */
 .patient-options-button {
     position: absolute;
     top: 8px;
@@ -93,6 +105,7 @@
     color: var(--text-secondary);
     border-radius: 4px;
     transition: background-color 0.2s;
+    z-index: 2; /* Ensure it stays above other elements */
 }
 
 .patient-options-button:hover {
@@ -131,15 +144,7 @@
     background-color: #ffeaea;
 }
 
-/* Time positioning */
-.patient-time {
-    position: absolute;
-    bottom: 8px;
-    right: 12px;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-weight: 400;
-}
+/* Remove the old time positioning since it's now inline */
 
 /* Remove all hardcoded status color classes - colors now come from database/statusService */
 /* These are kept only for backward compatibility in case of fallback scenarios */
@@ -172,12 +177,12 @@
 @media (max-width: 480px) {
     .patient-card {
         padding: 10px;
-        padding-bottom: 30px;
+        padding-bottom: 18px; /* Very compact on mobile */
     }
     
     .patient-avatar {
-        width: 48px;
-        height: 48px;
+        width: 65px; /* 40% bigger than the mobile 48px base */
+        height: 65px;
         margin-right: 10px;
     }
     
@@ -197,5 +202,12 @@
         padding: 5px 10px;
         font-size: 0.8rem;
         border-radius: 12px;
+        margin-left: -10px; /* Adjusted for mobile padding */
+    }
+    
+    .patient-time {
+        font-size: 0.7rem;
+        bottom: 3px; /* Very close to bottom on mobile */
+        right: 10px;
     }
 }
