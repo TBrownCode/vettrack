@@ -1,4 +1,4 @@
-// src/components/SimpleCameraCapture.js - Fixed camera initialization
+// src/components/SimpleCameraCapture.js - Enhanced Version with Navigation Cleanup
 import React, { useRef, useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -11,7 +11,7 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
   const [error, setError] = useState(null);
   const [videoReady, setVideoReady] = useState(false);
   
-  // Robust camera initialization with timeout and fallback
+  // ENHANCED: Camera initialization with navigation cleanup
   useEffect(() => {
     let mounted = true;
     let timeoutId;
@@ -96,7 +96,8 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
             }
           }, 1000);
         } else {
-          // Component unmounted, clean up
+          // Component unmounted during init, clean up immediately
+          console.log('SimpleCameraCapture: Component unmounted during init, cleaning up');
           mediaStream.getTracks().forEach(track => track.stop());
         }
       } catch (err) {
@@ -121,18 +122,58 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
       }
     };
     
+    // ENHANCED: Cleanup function that handles both React unmount and navigation
+    const cleanup = () => {
+      console.log('SimpleCameraCapture: Performing cleanup');
+      mounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      
+      if (stream) {
+        console.log('SimpleCameraCapture: Cleaning up camera stream');
+        stream.getTracks().forEach(track => {
+          console.log('SimpleCameraCapture: Stopping track:', track.label);
+          track.stop();
+        });
+      }
+    };
+    
+    // ENHANCED: Listen for page navigation events
+    const handleBeforeUnload = () => {
+      cleanup();
+    };
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        console.log('SimpleCameraCapture: Page became hidden, cleaning up camera');
+        cleanup();
+      }
+    };
+    
+    // ENHANCED: Listen for popstate (back/forward navigation)
+    const handlePopState = () => {
+      console.log('SimpleCameraCapture: Navigation detected, cleaning up camera');
+      cleanup();
+      onClose(); // Close the camera when navigating
+    };
+    
     // Add a small delay to ensure component is fully mounted
     setTimeout(initCamera, 100);
     
+    // Add event listeners for navigation cleanup
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('popstate', handlePopState);
+    
     return () => {
-      mounted = false;
-      if (timeoutId) clearTimeout(timeoutId);
-      if (stream) {
-        console.log('SimpleCameraCapture: Cleaning up camera stream');
-        stream.getTracks().forEach(track => track.stop());
-      }
+      // Remove event listeners
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('popstate', handlePopState);
+      
+      // Perform cleanup
+      cleanup();
     };
-  }, []);
+  }, [onClose]);
   
   // Set up video element when stream is available
   useEffect(() => {
@@ -256,6 +297,11 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
     reader.readAsDataURL(file);
   };
   
+  const handleCloseClick = () => {
+    console.log('SimpleCameraCapture: Close button clicked');
+    onClose();
+  };
+  
   return (
     <div style={{ 
       position: 'fixed', 
@@ -277,13 +323,16 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
       }}>
         <h3 style={{ margin: 0, color: '#fff' }}>Take Photo</h3>
         <button 
-          onClick={onClose}
+          onClick={handleCloseClick}
           style={{ 
             background: 'none', 
             border: 'none', 
             color: '#fff', 
             fontSize: '20px',
-            cursor: 'pointer' 
+            cursor: 'pointer',
+            padding: '8px',
+            minWidth: '44px',
+            minHeight: '44px'
           }}
         >
           <FontAwesomeIcon icon={faTimes} />
@@ -384,10 +433,10 @@ const SimpleCameraCapture = ({ onCapture, onClose }) => {
             fontSize: '24px',
             cursor: (!error && videoReady) ? 'pointer' : 'default',
             boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
-            opacity: (!error && videoReady) ? 1 : 0.6
+            opacity: (!error && videoReady) ? 1 : 0.5
           }}
         >
-          <FontAwesomeIcon icon={faCamera} size="lg" />
+          <FontAwesomeIcon icon={faCamera} />
         </button>
       </div>
     </div>

@@ -1,4 +1,4 @@
-// src/components/CameraCapture.js
+// src/components/CameraCapture.js - Enhanced Version with Navigation Cleanup
 import React, { useEffect, useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faTimes, faSync, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -22,9 +22,9 @@ const CameraCapture = ({ onCapture, onClose }) => {
   const fileInputRef = useRef(null);
   const [initializationTimeout, setInitializationTimeout] = useState(false);
   
-  // Start camera and set timeout for initialization
+  // ENHANCED: Start camera and set timeout for initialization with navigation cleanup
   useEffect(() => {
-    console.log('CameraCapture mounted');
+    console.log('CameraCapture: Component mounted');
     
     // Start the camera
     const initCamera = async () => {
@@ -40,12 +40,48 @@ const CameraCapture = ({ onCapture, onClose }) => {
       }
     }, 5000);
     
-    return () => {
-      console.log('CameraCapture unmounting');
+    // ENHANCED: Cleanup function for navigation events
+    const cleanup = () => {
+      console.log('CameraCapture: Performing cleanup');
       clearTimeout(timeoutId);
       stopCamera();
     };
-  }, [startCamera, stopCamera]);
+    
+    // ENHANCED: Listen for page navigation events
+    const handleBeforeUnload = () => {
+      cleanup();
+    };
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        console.log('CameraCapture: Page became hidden, cleaning up camera');
+        cleanup();
+      }
+    };
+    
+    const handlePopState = () => {
+      console.log('CameraCapture: Navigation detected, cleaning up camera');
+      cleanup();
+      onClose(); // Close the camera when navigating
+    };
+    
+    // Add event listeners for navigation cleanup
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      console.log('CameraCapture: Component unmounting');
+      
+      // Remove event listeners
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('popstate', handlePopState);
+      
+      // Perform cleanup
+      cleanup();
+    };
+  }, [startCamera, stopCamera, isActive, onClose]);
   
   // Show fallback after timeout or error
   useEffect(() => {
@@ -70,17 +106,22 @@ const CameraCapture = ({ onCapture, onClose }) => {
   
   const handleTakePhoto = () => {
     if (!isActive) {
-      console.log('Cannot take photo - camera not active');
+      console.log('CameraCapture: Cannot take photo - camera not active');
       return;
     }
     
     const photoData = takePhoto();
     if (photoData && onCapture) {
-      console.log('Photo captured, invoking callback');
+      console.log('CameraCapture: Photo captured, invoking callback');
       onCapture(photoData);
     } else {
-      console.error('Failed to capture photo');
+      console.error('CameraCapture: Failed to capture photo');
     }
+  };
+  
+  const handleCloseClick = () => {
+    console.log('CameraCapture: Close button clicked');
+    onClose();
   };
   
   const renderCameraContent = () => {
@@ -111,7 +152,7 @@ const CameraCapture = ({ onCapture, onClose }) => {
       );
     }
     
-    // Otherwise show loading message ok
+    // Otherwise show loading message
     return (
       <div className="camera-loading">
         <p>Initializing camera...</p>
@@ -124,7 +165,16 @@ const CameraCapture = ({ onCapture, onClose }) => {
     <div className="camera-modal">
       <div className="camera-header">
         <h3>Take Photo</h3>
-        <button className="close-button" onClick={onClose} aria-label="Close">
+        <button 
+          className="close-button" 
+          onClick={handleCloseClick} 
+          aria-label="Close"
+          style={{
+            padding: '8px',
+            minWidth: '44px',
+            minHeight: '44px'
+          }}
+        >
           <FontAwesomeIcon icon={faTimes} />
         </button>
       </div>
