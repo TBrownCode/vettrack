@@ -40,7 +40,7 @@ function App() {
               <ProtectedRoute>
                 <header className="App-header">
                   <Link to="/" className="header-logo-link">
-                    <h1>VetTrack</h1>
+                    <h1>InPawgress</h1>
                   </Link>
                   
                   <HeaderDropdownMenu
@@ -54,7 +54,7 @@ function App() {
                   <Home />
                 </main>
                 <footer className="App-footer">
-                  <p>VetTrack - Veterinary Patient Tracking System</p>
+                  <p>InPawgress - Veterinary Patient Tracking System</p>
                 </footer>
               </ProtectedRoute>
             } />
@@ -63,7 +63,7 @@ function App() {
               <ProtectedRoute>
                 <header className="App-header">
                   <Link to="/" className="header-logo-link">
-                    <h1>VetTrack</h1>
+                    <h1>InPawgress</h1>
                   </Link>
                   
                   <HeaderDropdownMenu
@@ -77,7 +77,7 @@ function App() {
                   <PatientDetail />
                 </main>
                 <footer className="App-footer">
-                  <p>VetTrack - Veterinary Patient Tracking System</p>
+                  <p>InPawgress - Veterinary Patient Tracking System</p>
                 </footer>
               </ProtectedRoute>
             } />
