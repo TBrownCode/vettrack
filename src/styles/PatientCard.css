@@ -1,4 +1,4 @@
-/* src/styles/PatientCard.css - Updated to include patient ID styling */
+/* src/styles/PatientCard.css - Enhanced with better spacing and larger status badge */
 .patient-card {
     background-color: var(--surface-color);
     border-radius: 8px;
@@ -10,14 +10,14 @@
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     padding-bottom: 32px;
-  }
-  
-  .patient-card:hover {
+}
+
+.patient-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  }
-  
-  .patient-avatar {
+}
+
+.patient-avatar {
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -25,127 +25,177 @@
     margin-right: 12px;
     flex-shrink: 0;
     background-color: #e0e0e0;
-  }
-  
-  .patient-avatar img {
+}
+
+.patient-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-  
-  .patient-info {
+}
+
+.patient-info {
     flex: 1;
     min-width: 0; /* Enables text truncation */
-  }
-  
-  .patient-name {
-    margin: 0 0 4px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px; /* Consistent spacing between all text elements */
+}
+
+.patient-name {
+    margin: 0;
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
-  }
-  
-  .patient-id {
-    margin: 0 0 4px 0;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .patient-breed, .patient-owner {
-    margin: 0 0 4px 0;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .patient-status {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    /* Colors will be applied via inline styles from JavaScript */
-  }
-  
-  /* Remove all hardcoded status color classes - colors now come from database/statusService */
-  /* These are kept only for backward compatibility in case of fallback scenarios */
-  .status-surgery {
-    background-color: #fff0e8;
-    color: #ff6f00;
-  }
-  
-  .status-recovery {
-    background-color: #e6f7ed;
-    color: #0b8043;
-  }
-  
-  .status-admitted {
-    background-color: #e8f0fe;
-    color: #1a73e8;
-  }
-  
-  .status-discharge {
-    background-color: #f3e8fd;
-    color: #9334e6;
-  }
-  
-  .status-default {
-    background-color: #f5f5f5;
-    color: #5f6368;
-  }
-  
-  .patient-time {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-  }
+    line-height: 1.2;
+}
 
-  /* Options menu styles */
-  .patient-options-button {
+.patient-id {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.patient-breed, .patient-owner {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* Enhanced status badge - 25% bigger and better positioned */
+.patient-status {
+    display: inline-block;
+    padding: 6px 12px; /* Increased from 4px 8px (50% more padding) */
+    border-radius: 15px; /* Increased from 12px to maintain proportion */
+    font-size: 0.875rem; /* Increased from 0.75rem (about 17% bigger font) */
+    font-weight: 500;
+    margin-top: 2px; /* Small top margin for better visual separation */
+    align-self: flex-start; /* Ensure it doesn't stretch to full width */
+    /* Colors will be applied via inline styles from JavaScript */
+}
+
+/* Options button positioning */
+.patient-options-button {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 8px;
+    right: 8px;
     background: none;
     border: none;
-    color: var(--text-secondary);
-    padding: 4px 8px;
-    font-size: 1rem;
+    padding: 8px;
     cursor: pointer;
-    z-index: 2;
-  }
+    color: var(--text-secondary);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
 
-  .patient-options-menu {
+.patient-options-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Options menu */
+.patient-options-menu {
     position: absolute;
     top: 36px;
-    right: 12px;
+    right: 8px;
     background-color: white;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 3;
-  }
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+    min-width: 120px;
+}
 
-  .patient-delete-option {
+.patient-delete-option {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
-    border: none;
-    background: none;
-    color: #d32f2f; /* Red color for delete */
     font-size: 0.875rem;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-  }
+    color: #d32f2f;
+    transition: background-color 0.2s;
+}
 
-  .patient-delete-option:hover {
+.patient-delete-option:hover {
+    background-color: #ffeaea;
+}
+
+/* Time positioning */
+.patient-time {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* Remove all hardcoded status color classes - colors now come from database/statusService */
+/* These are kept only for backward compatibility in case of fallback scenarios */
+.status-surgery {
+    background-color: #fff0e8;
+    color: #ff6f00;
+}
+
+.status-recovery {
+    background-color: #e6f7ed;
+    color: #0b8043;
+}
+
+.status-admitted {
+    background-color: #e8f0fe;
+    color: #1a73e8;
+}
+
+.status-discharge {
+    background-color: #f3e8fd;
+    color: #9334e6;
+}
+
+.status-default {
     background-color: #f5f5f5;
-  }
+    color: #5f6368;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .patient-card {
+        padding: 10px;
+        padding-bottom: 30px;
+    }
+    
+    .patient-avatar {
+        width: 48px;
+        height: 48px;
+        margin-right: 10px;
+    }
+    
+    .patient-info {
+        gap: 5px;
+    }
+    
+    .patient-name {
+        font-size: 0.95rem;
+    }
+    
+    .patient-id, .patient-breed, .patient-owner {
+        font-size: 0.8rem;
+    }
+    
+    .patient-status {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+        border-radius: 12px;
+    }
+}
