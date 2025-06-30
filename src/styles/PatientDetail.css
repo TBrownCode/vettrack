@@ -1,4 +1,4 @@
-/* src/styles/PatientDetail.css - Complete file with patient ID styling */
+/* src/styles/PatientDetail.css - Complete file with compact status dropdown (no descriptions) */
 .patient-detail-container {
     padding: 16px;
     padding-bottom: 80px;
@@ -71,6 +71,7 @@
     font-weight: 600;
   }
   
+  /* NEW: Patient ID styling */
   .patient-id-detail {
     margin: 0 0 8px 0;
     font-size: 0.875rem;
@@ -195,89 +196,152 @@
     font-weight: 600;
   }
   
-  /* Status options dropdown */
+  /* COMPLETE STATUS COLOR CLASSES - All default statuses */
+  .status-admitted { 
+    background-color: #e8f0fe !important; 
+    color: #4285f4 !important; 
+  }
+
+  .status-being-examined { 
+    background-color: #fce8e6 !important; 
+    color: #ea4335 !important; 
+  }
+
+  .status-awaiting-tests { 
+    background-color: #fef7e0 !important; 
+    color: #fbbc05 !important; 
+  }
+
+  .status-test-results-pending { 
+    background-color: #fef7e0 !important; 
+    color: #fbbc05 !important; 
+  }
+
+  .status-being-prepped-for-surgery { 
+    background-color: #fff0e8 !important; 
+    color: #fa903e !important; 
+  }
+
+  .status-in-surgery { 
+    background-color: #fce8e6 !important; 
+    color: #ea4335 !important; 
+  }
+
+  .status-in-recovery { 
+    background-color: #e6f4ea !important; 
+    color: #34a853 !important; 
+  }
+
+  .status-awake-responsive { 
+    background-color: #e6f4ea !important; 
+    color: #34a853 !important; 
+  }
+
+  .status-ready-for-discharge { 
+    background-color: #f3e8fd !important; 
+    color: #a142f4 !important; 
+  }
+
+  .status-discharged { 
+    background-color: #f3e8fd !important; 
+    color: #a142f4 !important; 
+  }
+
+  /* Custom status class - uses inline styles for colors */
+  .status-custom {
+    /* Base styling - colors will be applied via inline styles */
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    /* Colors will be overridden by inline styles */
+  }
+
+  /* Legacy status classes (for backward compatibility) */
+  .status-surgery { background-color: #fff0e8; color: #fa903e; }
+  .status-recovery { background-color: #e6f4ea; color: #1e8e3e; }
+  .status-discharge { background-color: #f3e8fd; color: #a142f4; }
+  .status-default { background-color: #f5f5f5; color: #5f6368; }
+  
   .status-options-dropdown {
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
+    z-index: 10;
     background-color: white;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    z-index: 10;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     max-height: 400px;
     overflow-y: auto;
-    margin-top: 4px;
   }
   
+  /* UPDATED: Compact status option styling with smaller font to match badge */
   .status-option {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     width: 100%;
     padding: 12px 16px;
     border: none;
     background: none;
     text-align: left;
-    font-size: 1rem;
+    font-size: 0.95rem; /* Smaller to match status badge better */
     cursor: pointer;
-    color: var(--text-primary);
-    transition: background-color 0.2s ease;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  
-  .status-option:last-child {
-    border-bottom: none;
   }
   
   .status-option:hover {
-    background-color: #f8f9fa;
-  }
-  
-  .status-option.loading {
-    text-align: center;
-    color: var(--text-secondary);
-    cursor: default;
+    background-color: #f5f5f5;
   }
   
   .status-option-main {
     display: flex;
     align-items: center;
-    gap: 16px;
-    flex: 1;
+    gap: 10px;
+    width: 100%;
+    font-size: 0.95rem; /* Smaller to match status badge better */
+    font-weight: 500;
   }
   
-  .status-update-info {
-    margin-top: 8px;
-    font-size: 0.875rem;
+  /* Hide descriptions completely */
+  .status-option-description {
+    display: none !important;
+  }
+  
+  .status-selected-icon {
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    margin-right: 4px;
+  }
+
+  /* Make status dots larger for better visibility */
+  .status-option-main span[style*="color"] {
+    font-size: 18px !important;
+    line-height: 1;
+  }
+  
+  .last-updated {
+    margin: 8px 0 0 0;
+    font-size: 0.75rem;
     color: var(--text-secondary);
   }
   
-  .status-update-info p {
-    margin: 0;
-  }
-  
-  /* Action buttons */
   .action-buttons {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-bottom: 24px;
   }
   
   .action-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 16px;
+    padding: 14px;
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
     border: none;
+    cursor: pointer;
   }
   
   .action-button.primary {
@@ -285,47 +349,38 @@
     color: white;
   }
   
-  .action-button.primary:hover {
-    background-color: #3367d6;
-    transform: translateY(-1px);
-  }
-  
   .action-button.secondary {
     background-color: white;
-    color: var(--text-primary);
     border: 1px solid var(--border-color);
+    color: var(--text-primary);
   }
   
-  .action-button.secondary:hover {
-    background-color: #f8f9fa;
-    transform: translateY(-1px);
-  }
-  
-  .action-button.danger {
-    background-color: #ea4335;
-    color: white;
-  }
-  
-  .action-button.danger:hover {
-    background-color: #d32f2f;
-    transform: translateY(-1px);
+  .action-button svg {
+    margin-right: 8px;
   }
   
   .loading-container,
   .error-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
+    padding: 32px 16px;
     text-align: center;
     color: var(--text-secondary);
   }
   
   .error-container {
-    color: #ea4335;
+    color: var(--error-color);
   }
-  
-  /* Photo modal styles */
+
+  .action-button.danger {
+    background-color: #f44336;
+    color: white;
+    border: none;
+  }
+
+  .action-button.danger:hover {
+    background-color: #d32f2f;
+  }
+
+  /* Photo Modal Styles */
   .photo-modal {
     position: fixed;
     top: 0;
@@ -338,6 +393,12 @@
     justify-content: center;
     z-index: 1000;
     padding: 20px;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   .photo-modal-content {
@@ -347,10 +408,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    animation: photoModalOpen 0.3s ease-out;
+    animation: slideUp 0.3s ease-out;
   }
 
-  @keyframes photoModalOpen {
+  @keyframes slideUp {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
@@ -404,7 +465,7 @@
     opacity: 0.8;
   }
 
-  /* Mobile responsive adjustments */
+  /* Mobile responsive adjustments - UPDATED for compact dropdown */
   @media (max-width: 480px) {
     .patient-avatar-large {
       width: 70px;
@@ -434,13 +495,14 @@
       max-height: 300px;
     }
     
+    /* MORE COMPACT on mobile */
     .status-option {
-      padding: 10px 14px;
-      font-size: 0.95rem;
+      padding: 10px 14px; /* Even more compact on mobile */
+      font-size: 0.95rem; /* Even smaller on mobile */
     }
 
     .status-option-main {
-      font-size: 0.95rem;
+      font-size: 0.95rem; /* Even smaller on mobile */
       gap: 12px;
     }
     
@@ -453,6 +515,7 @@
       font-size: 0.8rem;
     }
 
+    /* Larger status badge in header */
     .status-badge {
       padding: 6px 14px;
       border-radius: 16px;
