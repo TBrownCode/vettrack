@@ -1,4 +1,4 @@
-/* src/styles/SendUpdateForm.css */
+/* src/styles/SendUpdateForm.css - FIXED Z-INDEX ISSUE */
 .send-update-container {
   position: fixed;
   top: 0;
@@ -6,7 +6,7 @@
   right: 0;
   bottom: 0;
   background-color: var(--surface-color);
-  z-index: 100;
+  z-index: 10002; /* FIXED: Increased from 100 to 10002 to be above hamburger dropdown */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -21,13 +21,14 @@
   color: white;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 10003; /* FIXED: Increased from 10 to 10003 */
 }
 
 .update-header h3 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 500;
+  flex: 1; /* ADDED: Allow title to take available space */
 }
 
 .close-button {
@@ -36,6 +37,24 @@
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
+  padding: 8px; /* ADDED: Proper padding for touch targets */
+  min-width: 44px; /* ADDED: Minimum touch target size */
+  min-height: 44px; /* ADDED: Minimum touch target size */
+  display: flex; /* ADDED: Better centering */
+  align-items: center; /* ADDED: Better centering */
+  justify-content: center; /* ADDED: Better centering */
+  border-radius: 4px; /* ADDED: Subtle border radius */
+  z-index: 10004; /* ADDED: Ensure close button is always on top */
+  position: relative; /* ADDED: For z-index to work */
+}
+
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* ADDED: Hover effect */
+}
+
+.close-button:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5); /* ADDED: Focus indicator */
+  outline-offset: 2px;
 }
 
 .update-form {
@@ -218,5 +237,20 @@
   .cancel-button,
   .send-button {
     width: 100%;
+  }
+  
+  /* ADDED: Ensure proper spacing on mobile */
+  .update-header {
+    padding: 12px 16px;
+  }
+  
+  .update-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .close-button {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 1.25rem;
   }
 }
