@@ -1,4 +1,4 @@
-/* src/styles/UpdateConfirmation.css - Fixed with overlay and close button */
+/* src/styles/UpdateConfirmation.css - MINIMAL CHANGE: Just fix z-index */
 .update-confirmation-overlay {
   position: fixed;
   top: 0;
@@ -9,10 +9,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 10005; /* ONLY CHANGE: Increased from 1000 to 10005 */
   padding: 20px;
 }
 
+/* All other CSS stays exactly the same as before */
 .update-confirmation {
   background: white;
   border-radius: 12px;

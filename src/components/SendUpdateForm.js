@@ -1,4 +1,4 @@
-// src/components/SendUpdateForm.js - Updated with cancel button moved below
+// src/components/SendUpdateForm.js - Updated with Email as default and SMS/Both disabled
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPaperPlane, faImage } from '@fortawesome/free-solid-svg-icons';
@@ -15,7 +15,7 @@ const MESSAGE_TEMPLATES = {
 const SendUpdateForm = ({ patient, onSend, onClose }) => {
   const [messageType, setMessageType] = useState('status_update');
   const [customMessage, setCustomMessage] = useState('');
-  const [sendMethod, setSendMethod] = useState('both'); // 'sms', 'email', or 'both'
+  const [sendMethod, setSendMethod] = useState('email'); // CHANGED: Default to 'email' instead of 'both'
   const [includePhoto, setIncludePhoto] = useState(true);
   const [sending, setSending] = useState(false);
   
@@ -80,7 +80,7 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
         timestamp: new Date().toISOString(),
         recipientName: patient.owner,
         recipientContact: patient.phone,
-        recipientEmail: patient.email, // Include email
+        recipientEmail: patient.email,
       };
       
       // Call the onSend callback with the update data
@@ -160,17 +160,17 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
         <div className="form-row">
           <label>Send Via</label>
           <div className="send-method-options">
-            <label className="method-option">
+            <label className="method-option method-option-disabled">
               <input
                 type="radio"
                 name="sendMethod"
                 value="sms"
                 checked={sendMethod === 'sms'}
                 onChange={() => setSendMethod('sms')}
-                disabled={!patient.phone}
+                disabled={true} // CHANGED: Always disabled for now
               />
-              <span style={{ opacity: !patient.phone ? 0.5 : 1 }}>
-                SMS {!patient.phone && '(No phone)'}
+              <span style={{ opacity: 0.4, color: '#999' }}>
+                SMS (Coming Soon)
               </span>
             </label>
             <label className="method-option">
@@ -186,17 +186,17 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
                 Email {!patient.email && '(No email)'}
               </span>
             </label>
-            <label className="method-option">
+            <label className="method-option method-option-disabled">
               <input
                 type="radio"
                 name="sendMethod"
                 value="both"
                 checked={sendMethod === 'both'}
                 onChange={() => setSendMethod('both')}
-                disabled={!patient.phone || !patient.email}
+                disabled={true} // CHANGED: Always disabled for now
               />
-              <span style={{ opacity: (!patient.phone || !patient.email) ? 0.5 : 1 }}>
-                Both {(!patient.phone || !patient.email) && '(Missing contact info)'}
+              <span style={{ opacity: 0.4, color: '#999' }}>
+                Both (Coming Soon)
               </span>
             </label>
           </div>
@@ -229,7 +229,7 @@ const SendUpdateForm = ({ patient, onSend, onClose }) => {
             className="send-button"
             disabled={sending || !canSendViaMethod(sendMethod)}
           >
-            {sending ? 'Sending...' : `Send Message via ${sendMethod.toUpperCase()}`}
+            {sending ? 'Sending...' : `Send Message via EMAIL`}
             <FontAwesomeIcon icon={faPaperPlane} />
           </button>
           <button 

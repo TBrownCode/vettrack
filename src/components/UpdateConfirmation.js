@@ -1,26 +1,28 @@
-// src/components/UpdateConfirmation.js - Fixed with close button
+// src/components/UpdateConfirmation.js - MINIMAL FIX ONLY
 import React, { useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import '../styles/UpdateConfirmation.css';
 
-const UpdateConfirmation = ({ onClose }) => {
-  useEffect(() => {
-    // Automatically dismiss after 3 seconds
-    const timer = setTimeout(() => {
-      if (onClose) {
-        onClose();
-      }
-    }, 3000);
-    
-    return () => clearTimeout(timer);
-  }, [onClose]);
-  
+const UpdateConfirmation = ({ onClose, onDismiss }) => {
+  // MINIMAL CHANGE: Support both prop names
   const handleClose = () => {
     if (onClose) {
       onClose();
     }
+    if (onDismiss) {
+      onDismiss();
+    }
   };
+
+  useEffect(() => {
+    // Automatically dismiss after 3 seconds
+    const timer = setTimeout(() => {
+      handleClose();
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   return (
     <div className="update-confirmation-overlay" onClick={handleClose}>

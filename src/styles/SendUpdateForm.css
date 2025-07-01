@@ -1,4 +1,4 @@
-/* src/styles/SendUpdateForm.css - FIXED Z-INDEX ISSUE */
+/* src/styles/SendUpdateForm.css - FIXED Z-INDEX + DISABLED STATES */
 .send-update-container {
   position: fixed;
   top: 0;
@@ -145,6 +145,7 @@
 .send-method-options {
   display: flex;
   gap: 16px;
+  flex-wrap: wrap; /* ADDED: Allow wrapping on smaller screens */
 }
 
 .method-option {
@@ -153,6 +154,33 @@
   gap: 8px;
   font-size: 0.875rem;
   cursor: pointer;
+  transition: opacity 0.2s ease; /* ADDED: Smooth transitions */
+}
+
+/* NEW: Disabled method option styling */
+.method-option-disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.method-option-disabled input[type="radio"] {
+  cursor: not-allowed;
+}
+
+.method-option-disabled span {
+  cursor: not-allowed;
+  color: #999 !important;
+}
+
+/* Enhanced radio button styling */
+.method-option input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.method-option input[type="radio"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .checkbox-label {
@@ -210,6 +238,11 @@
   justify-content: center;
   gap: 8px;
   order: 1;
+  transition: background-color 0.2s ease; /* ADDED: Smooth transitions */
+}
+
+.send-button:hover:not(:disabled) {
+  background-color: #3367d6; /* ADDED: Hover effect */
 }
 
 .cancel-button {
@@ -220,6 +253,12 @@
   font-size: 1rem;
   cursor: pointer;
   order: 2;
+  transition: all 0.2s ease; /* ADDED: Smooth transitions */
+}
+
+.cancel-button:hover:not(:disabled) {
+  background-color: #f5f5f5; /* ADDED: Hover effect */
+  border-color: #999; /* ADDED: Hover effect */
 }
 
 .send-button:disabled,
@@ -252,5 +291,11 @@
     min-width: 40px;
     min-height: 40px;
     font-size: 1.25rem;
+  }
+  
+  /* ADDED: Stack send method options on very small screens */
+  .send-method-options {
+    flex-direction: column;
+    gap: 8px;
   }
 }
